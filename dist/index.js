@@ -177,7 +177,6 @@ async function run() {
     const splitConfig = singleReportPath.length
         ? (0, split_config_generator_1.createSplitConfig)(files).map(remove_leading_text_1.removeLeadingText)
         : (0, split_config_generator_1.createSplitConfig)(files);
-    console.log(splitConfig);
     const details = (0, split_config_generator_1.runtimeDetails)(files);
     console.log('===============================');
     console.log(details);

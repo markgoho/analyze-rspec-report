@@ -79,8 +79,6 @@ async function run(): Promise<void> {
     ? createSplitConfig(files).map(removeLeadingText)
     : createSplitConfig(files);
 
-  console.log(splitConfig);
-
   const details = runtimeDetails(files);
   console.log('===============================');
   console.log(details);
