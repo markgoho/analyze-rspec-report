@@ -27,3 +27,4 @@ jobs:
       - uses: ./
         with:
           single-report-path: 'benefit_sponsors/benefit_sponsors-rspec-report.json'
+          upload-name: 'benefit-sponsors-split'
