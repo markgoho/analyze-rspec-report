@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import * as artifact from '@actions/artifact';
 import * as core from '@actions/core';
 
 import {
@@ -85,6 +86,28 @@ async function run(): Promise<void> {
       core.setFailed(
         `Setting report to ${outputPath} failed: ${error.message}`,
       );
+    }
+  }
+
+  // Upload the report
+  const shouldUpload: boolean = core.getBooleanInput('upload');
+
+  if (shouldUpload) {
+    const artifactClient = artifact.create();
+    const artifactName = outputPath;
+    const filesToUpload = [outputPath];
+    const rootDirectory = '.';
+
+    try {
+      await artifactClient.uploadArtifact(
+        artifactName,
+        filesToUpload,
+        rootDirectory,
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        core.setFailed(`Uploading the artifact failed: ${error.message}`);
+      }
     }
   }
 }

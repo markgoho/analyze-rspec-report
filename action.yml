@@ -13,6 +13,10 @@ inputs:
     required: false
     description: 'relative path to output report'
     default: 'rspec-split-config.json'
+  upload:
+    required: false
+    description: 'Uploads the report as an artifact'
+    default: 'true'
 runs:
   using: 'node16'
   main: 'dist/index.js'
