@@ -16,13 +16,13 @@ import { moveRspecReports } from './move-rspec-reports';
 import { rspecExamplesToRuntime } from './examples-to-runtime';
 
 async function run(): Promise<void> {
-  const singleReportPath: string | undefined =
-    core.getInput('single-report-path');
+  const singleReportPath: string = core.getInput('single-report-path');
 
-  const reportPath: string =
-    singleReportPath ?? `${tempFolder}/${concatenatedReportName}`;
+  const reportPath: string = singleReportPath.length
+    ? singleReportPath
+    : `${tempFolder}/${concatenatedReportName}`;
 
-  if (singleReportPath !== undefined) {
+  if (singleReportPath.length) {
     console.log(`Single report path: ${singleReportPath}`);
   } else {
     const individualReportsFolder: string = core.getInput(

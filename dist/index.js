@@ -124,8 +124,10 @@ const move_rspec_reports_1 = __nccwpck_require__(938);
 const examples_to_runtime_1 = __nccwpck_require__(405);
 async function run() {
     const singleReportPath = core.getInput('single-report-path');
-    const reportPath = singleReportPath ?? `${global_variables_1.tempFolder}/${global_variables_1.concatenatedReportName}`;
-    if (singleReportPath !== undefined) {
+    const reportPath = singleReportPath.length
+        ? singleReportPath
+        : `${global_variables_1.tempFolder}/${global_variables_1.concatenatedReportName}`;
+    if (singleReportPath.length) {
         console.log(`Single report path: ${singleReportPath}`);
     }
     else {
