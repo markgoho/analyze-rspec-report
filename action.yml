@@ -2,10 +2,14 @@ name: 'Your name here'
 description: 'Provide a description here'
 author: 'Your name or organization here'
 inputs:
-  milliseconds: # change this
-    required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+  individual-reports-folder:
+    required: false
+    description: 'The folder containing the downloaded individual rspec reports'
+    default: 'individual-reports'
+  output-report:
+    required: false
+    description: 'relative path to output report'
+    default: 'rspec-split-config.json'
 runs:
   using: 'node16'
   main: 'dist/index.js'
