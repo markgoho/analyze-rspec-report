@@ -188,11 +188,16 @@ async function run() {
     }
     // Upload the report
     const shouldUpload = core.getBooleanInput('upload');
+    const uploadName = core.getInput('upload-name');
+    if (singleReportPath.length && uploadName === 'rspec-split-config') {
+        core.setFailed('If a single report is to be uploaded, please provide a name for the artifact');
+        return;
+    }
     if (shouldUpload) {
         const artifactClient = artifact.create();
         const artifactName = singleReportPath.length
-            ? singleReportPath
-            : `group-split-config`;
+            ? uploadName
+            : 'group-split-config';
         const filesToUpload = [outputPath];
         const rootDirectory = '.';
         try {

@@ -17,6 +17,10 @@ inputs:
     required: false
     description: 'Uploads the report as an artifact'
     default: 'true'
+  upload-name:
+    required: false
+    description: 'Name of the artifact'
+    default: 'rspec-split-config'
 runs:
   using: 'node16'
   main: 'dist/index.js'
