@@ -4,7 +4,7 @@ author: 'Your name or organization here'
 inputs:
   single-report-path:
     required: false
-    description: 'Analyze a single report without'
+    description: 'Analyze a single report'
   individual-reports-folder:
     required: false
     description: 'The folder containing the downloaded individual rspec reports'

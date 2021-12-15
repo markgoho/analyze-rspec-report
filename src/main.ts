@@ -7,8 +7,8 @@ import {
   createSplitConfig,
   runtimeDetails,
 } from 'split-config-generator';
-import { concatenatedReportName, tempFolder } from './global-variables';
 import { RspecExample, RspecReport } from 'rspec-report-analyzer';
+import { concatenatedReportName, tempFolder } from './global-variables';
 
 import { concatReports } from './concat-rspec-reports';
 import { promises as fs } from 'fs';
