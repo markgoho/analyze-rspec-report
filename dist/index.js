@@ -38,6 +38,7 @@ exports.concatReports = concatReports;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.rspecExamplesToRuntime = void 0;
 const rspecExamplesToRuntime = (examples) => {
+    // eslint-disable-next-line no-console
     console.log({ examples });
     const dictionary = examples.reduce((totalConfig, example) => {
         const filePath = removeLeadingDotSlash(example.file_path);
@@ -164,7 +165,14 @@ async function run() {
         }
         return;
     }
-    const rspecExamples = JSON.parse(rspecExamplesString);
+    let rspecExamples;
+    if (singleReportPath.length) {
+        const singleReport = JSON.parse(rspecExamplesString);
+        rspecExamples = singleReport.examples;
+    }
+    else {
+        rspecExamples = JSON.parse(rspecExamplesString);
+    }
     const files = (0, examples_to_runtime_1.rspecExamplesToRuntime)(rspecExamples);
     const splitConfig = (0, split_config_generator_1.createSplitConfig)(files);
     const details = (0, split_config_generator_1.runtimeDetails)(files);

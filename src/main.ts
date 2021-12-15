@@ -8,7 +8,7 @@ import {
   runtimeDetails,
 } from 'split-config-generator';
 import { concatenatedReportName, tempFolder } from './global-variables';
-import { RspecExample } from 'rspec-report-analyzer';
+import { RspecExample, RspecReport } from 'rspec-report-analyzer';
 
 import { concatReports } from './concat-rspec-reports';
 import { promises as fs } from 'fs';
@@ -63,7 +63,14 @@ async function run(): Promise<void> {
     return;
   }
 
-  const rspecExamples: RspecExample[] = JSON.parse(rspecExamplesString);
+  let rspecExamples: RspecExample[];
+
+  if (singleReportPath.length) {
+    const singleReport: RspecReport = JSON.parse(rspecExamplesString);
+    rspecExamples = singleReport.examples;
+  } else {
+    rspecExamples = JSON.parse(rspecExamplesString);
+  }
 
   const files: FileWithRuntime[] = rspecExamplesToRuntime(rspecExamples);
   const splitConfig: SplitConfig = createSplitConfig(files);
