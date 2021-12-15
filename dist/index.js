@@ -9,13 +9,13 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.concatReports = void 0;
 const fs_1 = __nccwpck_require__(747);
-const folder_names_1 = __nccwpck_require__(885);
+const global_variables_1 = __nccwpck_require__(751);
 const concatReports = async () => {
-    const allFiles = await fs_1.promises.readdir(folder_names_1.tempFolder);
+    const allFiles = await fs_1.promises.readdir(global_variables_1.tempFolder);
     const rspecReports = allFiles.filter(file => file.endsWith('.json'));
     const singleReport = [];
     for (let index = 0; index < rspecReports.length; index++) {
-        const path = `${folder_names_1.tempFolder}/${rspecReports[index]}`;
+        const path = `${global_variables_1.tempFolder}/${rspecReports[index]}`;
         const report = await fs_1.promises.readFile(path, 'utf-8');
         singleReport.push(JSON.parse(report));
     }
@@ -23,7 +23,7 @@ const concatReports = async () => {
         .map(report => report.examples)
         .flat()
         .filter(report => report.status !== 'pending');
-    await fs_1.promises.writeFile(`${folder_names_1.tempFolder}/local-rspec-report.json`, JSON.stringify(examples));
+    await fs_1.promises.writeFile(`${global_variables_1.tempFolder}/local-rspec-report.json`, JSON.stringify(examples));
 };
 exports.concatReports = concatReports;
 
@@ -76,14 +76,15 @@ const createFilesWithRuntime = (filesByRuntime) => {
 
 /***/ }),
 
-/***/ 885:
+/***/ 751:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.tempFolder = void 0;
+exports.concatenatedReportName = exports.tempFolder = void 0;
 exports.tempFolder = 'rspec-processing';
+exports.concatenatedReportName = 'local-rspec-report.json';
 
 
 /***/ }),
@@ -116,36 +117,43 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 /* eslint-disable no-console */
 const core = __importStar(__nccwpck_require__(186));
 const split_config_generator_1 = __nccwpck_require__(116);
+const global_variables_1 = __nccwpck_require__(751);
 const concat_rspec_reports_1 = __nccwpck_require__(44);
 const fs_1 = __nccwpck_require__(747);
 const move_rspec_reports_1 = __nccwpck_require__(938);
 const examples_to_runtime_1 = __nccwpck_require__(405);
-const folder_names_1 = __nccwpck_require__(885);
 async function run() {
-    const individualReportsFolder = core.getInput('individual-reports-folder');
-    // Move the rspec reports to a single folder
-    try {
-        await (0, move_rspec_reports_1.moveRspecReports)(individualReportsFolder);
+    const singleReportPath = core.getInput('single-report-path');
+    const reportPath = singleReportPath ?? `${global_variables_1.tempFolder}/${global_variables_1.concatenatedReportName}`;
+    if (singleReportPath !== undefined) {
+        console.log(`Single report path: ${singleReportPath}`);
     }
-    catch (error) {
-        if (error instanceof Error) {
-            core.setFailed(`Could not move the rspec reports: ${error.message}`);
-            return;
+    else {
+        const individualReportsFolder = core.getInput('individual-reports-folder');
+        // Move the rspec reports to a single folder
+        try {
+            await (0, move_rspec_reports_1.moveRspecReports)(individualReportsFolder);
         }
-    }
-    // Concatenate the rspec reports
-    try {
-        await (0, concat_rspec_reports_1.concatReports)();
-    }
-    catch (error) {
-        if (error instanceof Error) {
-            core.setFailed(`Could not concatenate the rspec reports: ${error.message}`);
-            return;
+        catch (error) {
+            if (error instanceof Error) {
+                core.setFailed(`Could not move the rspec reports: ${error.message}`);
+                return;
+            }
+        }
+        // Concatenate the rspec reports
+        try {
+            await (0, concat_rspec_reports_1.concatReports)();
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                core.setFailed(`Could not concatenate the rspec reports: ${error.message}`);
+                return;
+            }
         }
     }
     let rspecExamplesString;
     try {
-        rspecExamplesString = await fs_1.promises.readFile(`${folder_names_1.tempFolder}/local-rspec-report.json`, 'utf-8');
+        rspecExamplesString = await fs_1.promises.readFile(reportPath, 'utf-8');
     }
     catch (error) {
         if (error instanceof Error) {
@@ -182,7 +190,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.moveRspecReports = void 0;
 /* eslint-disable @typescript-eslint/prefer-for-of */
 const fs_1 = __nccwpck_require__(747);
-const folder_names_1 = __nccwpck_require__(885);
+const global_variables_1 = __nccwpck_require__(751);
 const moveRspecReports = async (groupFolderPath) => {
     const reportNames = await fs_1.promises.readdir(groupFolderPath);
     for (let i = 0; i < reportNames.length; i++) {
@@ -191,9 +199,9 @@ const moveRspecReports = async (groupFolderPath) => {
         // Create the full json report path
         const originalReportPath = `${groupFolderPath}/${reportName}/${reportName}-rspec-report.json`;
         // Make a temporary directory
-        await fs_1.promises.mkdir(folder_names_1.tempFolder, { recursive: true });
+        await fs_1.promises.mkdir(global_variables_1.tempFolder, { recursive: true });
         // Copy the json report to the new location
-        await fs_1.promises.copyFile(originalReportPath, `${folder_names_1.tempFolder}/${reportName}-rspec-report.json`);
+        await fs_1.promises.copyFile(originalReportPath, `${global_variables_1.tempFolder}/${reportName}-rspec-report.json`);
     }
 };
 exports.moveRspecReports = moveRspecReports;
