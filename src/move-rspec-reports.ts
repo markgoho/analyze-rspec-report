@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/prefer-for-of */
 import { promises as fs } from 'fs';
-import { tempFolder } from './folder-names';
+import { tempFolder } from './global-variables';
 
 export const moveRspecReports = async (
   groupFolderPath: string,

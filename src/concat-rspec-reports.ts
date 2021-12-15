@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/prefer-for-of */
 import { RspecExample, RspecReport } from 'rspec-report-analyzer';
 import { promises as fs } from 'fs';
-import { tempFolder } from './folder-names';
+import { tempFolder } from './global-variables';
 
 export const concatReports = async (): Promise<void> => {
   const allFiles: string[] = await fs.readdir(tempFolder);
