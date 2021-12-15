@@ -5,6 +5,9 @@ import { RspecExample } from 'rspec-report-analyzer';
 export const rspecExamplesToRuntime = (
   examples: RspecExample[],
 ): FileWithRuntime[] => {
+  // eslint-disable-next-line no-console
+  console.log({ examples });
+
   const dictionary = examples.reduce(
     (totalConfig: FileWithRuntimeDictionary, example: RspecExample) => {
       const filePath = removeLeadingDotSlash(example.file_path);

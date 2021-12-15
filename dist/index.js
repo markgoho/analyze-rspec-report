@@ -38,6 +38,7 @@ exports.concatReports = concatReports;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.rspecExamplesToRuntime = void 0;
 const rspecExamplesToRuntime = (examples) => {
+    console.log({ examples });
     const dictionary = examples.reduce((totalConfig, example) => {
         const filePath = removeLeadingDotSlash(example.file_path);
         if (totalConfig[filePath] !== undefined) {
