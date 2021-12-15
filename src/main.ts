@@ -14,6 +14,7 @@ import { concatenatedReportName, tempFolder } from './global-variables';
 import { concatReports } from './concat-rspec-reports';
 import { promises as fs } from 'fs';
 import { moveRspecReports } from './move-rspec-reports';
+import { removeLeadingText } from './remove-leading-text';
 import { rspecExamplesToRuntime } from './examples-to-runtime';
 
 async function run(): Promise<void> {
@@ -74,9 +75,16 @@ async function run(): Promise<void> {
   }
 
   const files: FileWithRuntime[] = rspecExamplesToRuntime(rspecExamples);
-  const splitConfig: SplitConfig = createSplitConfig(files);
+  const splitConfig: SplitConfig = singleReportPath.length
+    ? createSplitConfig(files).map(removeLeadingText)
+    : createSplitConfig(files);
+
+  console.log(splitConfig);
+
   const details = runtimeDetails(files);
+  console.log('===============================');
   console.log(details);
+  console.log('===============================');
 
   const outputPath = core.getInput('output-report');
   try {

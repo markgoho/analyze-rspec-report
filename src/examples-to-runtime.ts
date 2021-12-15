@@ -7,7 +7,7 @@ export const rspecExamplesToRuntime = (
 ): FileWithRuntime[] => {
   const dictionary = examples.reduce(
     (totalConfig: FileWithRuntimeDictionary, example: RspecExample) => {
-      const filePath = removeLeadingText(example.file_path);
+      const filePath = removeLeadingDotSlash(example.file_path);
 
       if (totalConfig[filePath] !== undefined) {
         const currentTotal = totalConfig[filePath].runtime;
@@ -31,9 +31,8 @@ export const rspecExamplesToRuntime = (
   return filesWithRuntime;
 };
 
-const removeLeadingText = (filePath: string): string => {
-  const specStringIndex = filePath.indexOf(filePath);
-  return filePath.substring(specStringIndex);
+const removeLeadingDotSlash = (filePath: string): string => {
+  return filePath.replace(/\.\//, '');
 };
 
 const createFilesWithRuntime = (

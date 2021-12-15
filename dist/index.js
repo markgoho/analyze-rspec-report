@@ -39,7 +39,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.rspecExamplesToRuntime = void 0;
 const rspecExamplesToRuntime = (examples) => {
     const dictionary = examples.reduce((totalConfig, example) => {
-        const filePath = removeLeadingText(example.file_path);
+        const filePath = removeLeadingDotSlash(example.file_path);
         if (totalConfig[filePath] !== undefined) {
             const currentTotal = totalConfig[filePath].runtime;
             return {
@@ -58,9 +58,8 @@ const rspecExamplesToRuntime = (examples) => {
     return filesWithRuntime;
 };
 exports.rspecExamplesToRuntime = rspecExamplesToRuntime;
-const removeLeadingText = (filePath) => {
-    const specStringIndex = filePath.indexOf(filePath);
-    return filePath.substring(specStringIndex);
+const removeLeadingDotSlash = (filePath) => {
+    return filePath.replace(/\.\//, '');
 };
 const createFilesWithRuntime = (filesByRuntime) => {
     return Object.entries(filesByRuntime)
@@ -123,6 +122,7 @@ const global_variables_1 = __nccwpck_require__(7751);
 const concat_rspec_reports_1 = __nccwpck_require__(8044);
 const fs_1 = __nccwpck_require__(7147);
 const move_rspec_reports_1 = __nccwpck_require__(5938);
+const remove_leading_text_1 = __nccwpck_require__(2890);
 const examples_to_runtime_1 = __nccwpck_require__(5405);
 async function run() {
     const singleReportPath = core.getInput('single-report-path');
@@ -174,9 +174,14 @@ async function run() {
         rspecExamples = JSON.parse(rspecExamplesString);
     }
     const files = (0, examples_to_runtime_1.rspecExamplesToRuntime)(rspecExamples);
-    const splitConfig = (0, split_config_generator_1.createSplitConfig)(files);
+    const splitConfig = singleReportPath.length
+        ? (0, split_config_generator_1.createSplitConfig)(files).map(remove_leading_text_1.removeLeadingText)
+        : (0, split_config_generator_1.createSplitConfig)(files);
+    console.log(splitConfig);
     const details = (0, split_config_generator_1.runtimeDetails)(files);
+    console.log('===============================');
     console.log(details);
+    console.log('===============================');
     const outputPath = core.getInput('output-report');
     try {
         await fs_1.promises.writeFile(outputPath, JSON.stringify(splitConfig));
@@ -239,6 +244,27 @@ const moveRspecReports = async (groupFolderPath) => {
     }
 };
 exports.moveRspecReports = moveRspecReports;
+
+
+/***/ }),
+
+/***/ 2890:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.removeLeadingText = void 0;
+const removeLeadingText = (fileGroup) => {
+    const existingFiles = fileGroup.files;
+    const newFiles = existingFiles.map(file => {
+        const specStringIndex = file.indexOf('spec');
+        const newFilePath = file.substring(specStringIndex);
+        return newFilePath;
+    });
+    return { files: newFiles };
+};
+exports.removeLeadingText = removeLeadingText;
 
 
 /***/ }),
