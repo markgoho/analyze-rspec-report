@@ -26,4 +26,4 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./
         with:
-          single-report-path: 'individual-reports/components/components-rspec-report.json'
+          single-report-path: 'individual-reports/components-benefit_sponsors/components-benefit_sponsors-rspec-report.json'

@@ -94,7 +94,9 @@ async function run(): Promise<void> {
 
   if (shouldUpload) {
     const artifactClient = artifact.create();
-    const artifactName = outputPath;
+    const artifactName = singleReportPath.length
+      ? singleReportPath
+      : `group-split-config`;
     const filesToUpload = [outputPath];
     const rootDirectory = '.';
 
