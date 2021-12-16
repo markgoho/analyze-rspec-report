@@ -28,7 +28,7 @@
     "@actions/artifact": "^0.6.1",
     "@actions/core": "^1.6.0",
     "rspec-report-analyzer": "^2.0.0",
-    "split-config-generator": "^1.2.1"
+    "split-config-generator": "^1.2.3"
   },
   "devDependencies": {
     "@types/node": "^16.11.13",
