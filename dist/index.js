@@ -8,22 +8,23 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.concatReports = void 0;
+// eslint-disable-next-line unicorn/prefer-node-protocol
 const fs_1 = __nccwpck_require__(7147);
 const global_variables_1 = __nccwpck_require__(7751);
 const concatReports = async () => {
-    const allFiles = await fs_1.promises.readdir(global_variables_1.tempFolder);
+    const allFiles = await fs_1.promises.readdir(global_variables_1.temporaryFolder);
     const rspecReports = allFiles.filter(file => file.endsWith('.json'));
     const singleReport = [];
-    for (let index = 0; index < rspecReports.length; index++) {
-        const path = `${global_variables_1.tempFolder}/${rspecReports[index]}`;
+    for (const rspecReport of rspecReports) {
+        const path = `${global_variables_1.temporaryFolder}/${rspecReport}`;
+        // eslint-disable-next-line unicorn/prefer-json-parse-buffer
         const report = await fs_1.promises.readFile(path, 'utf-8');
         singleReport.push(JSON.parse(report));
     }
     const examples = singleReport
-        .map(report => report.examples)
-        .flat()
+        .flatMap(report => report.examples)
         .filter(report => report.status !== 'pending');
-    await fs_1.promises.writeFile(`${global_variables_1.tempFolder}/local-rspec-report.json`, JSON.stringify(examples));
+    await fs_1.promises.writeFile(`${global_variables_1.temporaryFolder}/local-rspec-report.json`, JSON.stringify(examples));
 };
 exports.concatReports = concatReports;
 
@@ -82,8 +83,8 @@ const createFilesWithRuntime = (filesByRuntime) => {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.concatenatedReportName = exports.tempFolder = void 0;
-exports.tempFolder = 'rspec-processing';
+exports.concatenatedReportName = exports.temporaryFolder = void 0;
+exports.temporaryFolder = 'rspec-processing';
 exports.concatenatedReportName = 'local-rspec-report.json';
 
 
@@ -114,6 +115,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+/* eslint-disable unicorn/prefer-node-protocol */
 /* eslint-disable no-console */
 const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
@@ -126,10 +128,10 @@ const remove_leading_text_1 = __nccwpck_require__(2890);
 const examples_to_runtime_1 = __nccwpck_require__(5405);
 async function run() {
     const singleReportPath = core.getInput('single-report-path');
-    const reportPath = singleReportPath.length
+    const reportPath = singleReportPath.length > 0
         ? singleReportPath
-        : `${global_variables_1.tempFolder}/${global_variables_1.concatenatedReportName}`;
-    if (singleReportPath.length) {
+        : `${global_variables_1.temporaryFolder}/${global_variables_1.concatenatedReportName}`;
+    if (singleReportPath.length > 0) {
         console.log(`Single report path: ${singleReportPath}`);
     }
     else {
@@ -166,7 +168,7 @@ async function run() {
         return;
     }
     let rspecExamples;
-    if (singleReportPath.length) {
+    if (singleReportPath.length > 0) {
         const singleReport = JSON.parse(rspecExamplesString);
         rspecExamples = singleReport.examples;
     }
@@ -174,8 +176,8 @@ async function run() {
         rspecExamples = JSON.parse(rspecExamplesString);
     }
     const files = (0, examples_to_runtime_1.rspecExamplesToRuntime)(rspecExamples);
-    const splitConfig = singleReportPath.length
-        ? (0, split_config_generator_1.createSplitConfig)(files).map(remove_leading_text_1.removeLeadingText)
+    const splitConfig = singleReportPath.length > 0
+        ? (0, split_config_generator_1.createSplitConfig)(files).map(fileGroup => (0, remove_leading_text_1.removeLeadingText)(fileGroup))
         : (0, split_config_generator_1.createSplitConfig)(files);
     const details = (0, split_config_generator_1.runtimeDetails)(files);
     console.log('===============================');
@@ -193,15 +195,13 @@ async function run() {
     // Upload the report
     const shouldUpload = core.getBooleanInput('upload');
     const uploadName = core.getInput('upload-name');
-    if (singleReportPath.length && uploadName === 'rspec-split-config') {
+    if (singleReportPath.length > 0 && uploadName === 'rspec-split-config') {
         core.setFailed('If a single report is to be uploaded, please provide a name for the artifact');
         return;
     }
     if (shouldUpload) {
         const artifactClient = artifact.create();
-        const artifactName = singleReportPath.length
-            ? uploadName
-            : 'group-split-config';
+        const artifactName = singleReportPath.length > 0 ? uploadName : 'group-split-config';
         const filesToUpload = [outputPath];
         const rootDirectory = '.';
         try {
@@ -226,20 +226,19 @@ run();
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.moveRspecReports = void 0;
-/* eslint-disable @typescript-eslint/prefer-for-of */
+// eslint-disable-next-line unicorn/prefer-node-protocol
 const fs_1 = __nccwpck_require__(7147);
 const global_variables_1 = __nccwpck_require__(7751);
 const moveRspecReports = async (groupFolderPath) => {
     const reportNames = await fs_1.promises.readdir(groupFolderPath);
-    for (let i = 0; i < reportNames.length; i++) {
+    for (const reportName of reportNames) {
         // Get the folder name, e.g. admin, cover_all, etc.
-        const reportName = reportNames[i];
         // Create the full json report path
         const originalReportPath = `${groupFolderPath}/${reportName}/${reportName}-rspec-report.json`;
         // Make a temporary directory
-        await fs_1.promises.mkdir(global_variables_1.tempFolder, { recursive: true });
+        await fs_1.promises.mkdir(global_variables_1.temporaryFolder, { recursive: true });
         // Copy the json report to the new location
-        await fs_1.promises.copyFile(originalReportPath, `${global_variables_1.tempFolder}/${reportName}-rspec-report.json`);
+        await fs_1.promises.copyFile(originalReportPath, `${global_variables_1.temporaryFolder}/${reportName}-rspec-report.json`);
     }
 };
 exports.moveRspecReports = moveRspecReports;
@@ -258,7 +257,7 @@ const removeLeadingText = (fileGroup) => {
     const existingFiles = fileGroup.files;
     const newFiles = existingFiles.map(file => {
         const specStringIndex = file.indexOf('spec');
-        const newFilePath = file.substring(specStringIndex);
+        const newFilePath = file.slice(Math.max(0, specStringIndex));
         return newFilePath;
     });
     return { files: newFiles };
@@ -6998,10 +6997,18 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createSplitConfig = void 0;
 const runtime_details_1 = __nccwpck_require__(8);
 const util_1 = __nccwpck_require__(937);
-const createSplitConfig = (filesWithRuntime, groupCount) => {
+const createSplitConfig = (filesWithRuntime, manualGroupCount) => {
     const files = [...filesWithRuntime];
     const { longestTest, totalRuntime, suggestedGroupCount } = (0, runtime_details_1.runtimeDetails)(files);
-    const expectedGroupCount = groupCount ?? suggestedGroupCount;
+    let expectedGroupCount;
+    if (manualGroupCount !== undefined &&
+        manualGroupCount <= suggestedGroupCount) {
+        expectedGroupCount = manualGroupCount;
+    }
+    else {
+        expectedGroupCount = suggestedGroupCount;
+    }
+    // console.log({ manualGroupCount, suggestedGroupCount, expectedGroupCount });
     const groupRuntimes = Array.from({ length: expectedGroupCount }, () => ({
         files: [],
     }));
@@ -7009,23 +7016,23 @@ const createSplitConfig = (filesWithRuntime, groupCount) => {
     // 1. The longest test if the suggested group count is used
     // 2. The total runtime of all the tests divided by the manual group count
     let maxGroupRuntime;
-    if (groupCount === undefined) {
+    if (manualGroupCount === undefined) {
         maxGroupRuntime = longestTest;
     }
     else {
         maxGroupRuntime = totalRuntime / expectedGroupCount;
     }
+    // console.log({ maxGroupRuntime, longestTest });
     if (maxGroupRuntime < longestTest) {
-        console.error(`The max group runtime is less than the longest test.`);
-        console.error(`Decrease group count or run without a second argument.`);
+        console.info(`The max group runtime is less than the longest test.`);
     }
     // The magic happens here
     groupRuntimes.forEach(async (group) => {
-        while ((0, util_1.getGroupRuntime)(group.files) < longestTest && files.length) {
+        while ((0, util_1.getGroupRuntime)(group.files) < maxGroupRuntime && files.length) {
             // start with file at front of array
             const largestFile = files[0];
             // test whether that file can be added to current group
-            const largestFileIsAddable = largestFile.runtime + (0, util_1.getGroupRuntime)(group.files) <= longestTest;
+            const largestFileIsAddable = largestFile.runtime + (0, util_1.getGroupRuntime)(group.files) <= maxGroupRuntime;
             // if that file can be added, add it
             if (largestFileIsAddable) {
                 const file = files.shift();
@@ -7035,7 +7042,7 @@ const createSplitConfig = (filesWithRuntime, groupCount) => {
                 break;
             }
             const smallestFile = files[files.length - 1];
-            const smallestFileIsAddable = smallestFile.runtime + (0, util_1.getGroupRuntime)(group.files) <= longestTest;
+            const smallestFileIsAddable = smallestFile.runtime + (0, util_1.getGroupRuntime)(group.files) <= maxGroupRuntime;
             if (smallestFileIsAddable) {
                 const file = files.pop();
                 group.files.push(file);

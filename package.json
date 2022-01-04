@@ -27,7 +27,7 @@
   "dependencies": {
     "@actions/artifact": "^0.6.1",
     "@actions/core": "^1.6.0",
-    "rspec-report-analyzer": "^2.0.0",
+    "rspec-report-analyzer": "^2.0.1",
     "split-config-generator": "^1.2.3"
   },
   "devDependencies": {
@@ -36,7 +36,8 @@
     "@vercel/ncc": "^0.33.1",
     "eslint": "^8.5.0",
     "eslint-plugin-github": "^4.3.5",
-    "eslint-plugin-jest": "^25.3.0",
+    "eslint-plugin-jest": "^25.3.4",
+    "eslint-plugin-unicorn": "^40.0.0",
     "jest": "^27.4.5",
     "js-yaml": "^4.1.0",
     "prettier": "^2.5.1",

@@ -5,7 +5,7 @@ export const removeLeadingText = (fileGroup: FileGroup): FileGroup => {
 
   const newFiles = existingFiles.map(file => {
     const specStringIndex = file.indexOf('spec');
-    const newFilePath = file.substring(specStringIndex);
+    const newFilePath = file.slice(Math.max(0, specStringIndex));
 
     return newFilePath;
   });

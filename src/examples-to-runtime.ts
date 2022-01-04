@@ -1,3 +1,5 @@
+/* eslint-disable unicorn/prefer-object-from-entries */
+/* eslint-disable unicorn/no-array-reduce */
 import { FileWithRuntime } from 'split-config-generator';
 import { FileWithRuntimeDictionary } from './models';
 import { RspecExample } from 'rspec-report-analyzer';
