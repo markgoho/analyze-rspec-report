@@ -77,15 +77,23 @@ async function run(): Promise<void> {
   }
 
   const files: FileWithRuntime[] = rspecExamplesToRuntime(rspecExamples);
+  const details = runtimeDetails(files);
+
+  const groupCountInput: string = core.getInput('group-count');
+
+  const groupCount =
+    groupCountInput.length === 0
+      ? undefined
+      : Number.parseInt(groupCountInput, 10);
+
   const splitConfig: SplitConfig =
     singleReportPath.length > 0
-      ? createSplitConfig(files).map(fileGroup => removeLeadingText(fileGroup))
-      : createSplitConfig(files);
+      ? createSplitConfig(files, groupCount).map(fileGroup =>
+          removeLeadingText(fileGroup),
+        )
+      : createSplitConfig(files, groupCount);
 
-  const details = runtimeDetails(files);
-  console.log('===============================');
-  console.log(details);
-  console.log('===============================');
+  console.log({ ...details, groupCount: splitConfig.length });
 
   const outputPath = core.getInput('output-report');
   try {
@@ -102,14 +110,14 @@ async function run(): Promise<void> {
   const shouldUpload: boolean = core.getBooleanInput('upload');
   const uploadName: string = core.getInput('upload-name');
 
-  if (singleReportPath.length > 0 && uploadName === 'rspec-split-config') {
-    core.setFailed(
-      'If a single report is to be uploaded, please provide a name for the artifact',
-    );
-    return;
-  }
-
   if (shouldUpload) {
+    if (singleReportPath.length > 0 && uploadName === 'rspec-split-config') {
+      core.setFailed(
+        'If a single report is to be uploaded, please provide a name for the artifact',
+      );
+      return;
+    }
+
     const artifactClient = artifact.create();
     const artifactName =
       singleReportPath.length > 0 ? uploadName : 'group-split-config';

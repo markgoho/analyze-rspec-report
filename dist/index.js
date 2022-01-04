@@ -176,13 +176,15 @@ async function run() {
         rspecExamples = JSON.parse(rspecExamplesString);
     }
     const files = (0, examples_to_runtime_1.rspecExamplesToRuntime)(rspecExamples);
-    const splitConfig = singleReportPath.length > 0
-        ? (0, split_config_generator_1.createSplitConfig)(files).map(fileGroup => (0, remove_leading_text_1.removeLeadingText)(fileGroup))
-        : (0, split_config_generator_1.createSplitConfig)(files);
     const details = (0, split_config_generator_1.runtimeDetails)(files);
-    console.log('===============================');
-    console.log(details);
-    console.log('===============================');
+    const groupCountInput = core.getInput('group-count');
+    const groupCount = groupCountInput.length === 0
+        ? undefined
+        : Number.parseInt(groupCountInput, 10);
+    const splitConfig = singleReportPath.length > 0
+        ? (0, split_config_generator_1.createSplitConfig)(files, groupCount).map(fileGroup => (0, remove_leading_text_1.removeLeadingText)(fileGroup))
+        : (0, split_config_generator_1.createSplitConfig)(files, groupCount);
+    console.log({ ...details, groupCount: splitConfig.length });
     const outputPath = core.getInput('output-report');
     try {
         await fs_1.promises.writeFile(outputPath, JSON.stringify(splitConfig));
@@ -195,11 +197,11 @@ async function run() {
     // Upload the report
     const shouldUpload = core.getBooleanInput('upload');
     const uploadName = core.getInput('upload-name');
-    if (singleReportPath.length > 0 && uploadName === 'rspec-split-config') {
-        core.setFailed('If a single report is to be uploaded, please provide a name for the artifact');
-        return;
-    }
     if (shouldUpload) {
+        if (singleReportPath.length > 0 && uploadName === 'rspec-split-config') {
+            core.setFailed('If a single report is to be uploaded, please provide a name for the artifact');
+            return;
+        }
         const artifactClient = artifact.create();
         const artifactName = singleReportPath.length > 0 ? uploadName : 'group-split-config';
         const filesToUpload = [outputPath];
@@ -6988,7 +6990,7 @@ rimraf.sync = rimrafSync
 
 /***/ }),
 
-/***/ 6130:
+/***/ 2363:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -7000,14 +7002,9 @@ const util_1 = __nccwpck_require__(937);
 const createSplitConfig = (filesWithRuntime, manualGroupCount) => {
     const files = [...filesWithRuntime];
     const { longestTest, totalRuntime, suggestedGroupCount } = (0, runtime_details_1.runtimeDetails)(files);
-    let expectedGroupCount;
-    if (manualGroupCount !== undefined &&
-        manualGroupCount <= suggestedGroupCount) {
-        expectedGroupCount = manualGroupCount;
-    }
-    else {
-        expectedGroupCount = suggestedGroupCount;
-    }
+    const expectedGroupCount = manualGroupCount !== undefined && manualGroupCount <= suggestedGroupCount
+        ? manualGroupCount
+        : suggestedGroupCount;
     // console.log({ manualGroupCount, suggestedGroupCount, expectedGroupCount });
     const groupRuntimes = Array.from({ length: expectedGroupCount }, () => ({
         files: [],
@@ -7015,20 +7012,17 @@ const createSplitConfig = (filesWithRuntime, manualGroupCount) => {
     // The total runtime of a group is limited based on either:
     // 1. The longest test if the suggested group count is used
     // 2. The total runtime of all the tests divided by the manual group count
-    let maxGroupRuntime;
-    if (manualGroupCount === undefined) {
-        maxGroupRuntime = longestTest;
-    }
-    else {
-        maxGroupRuntime = totalRuntime / expectedGroupCount;
-    }
+    const maxGroupRuntime = manualGroupCount === undefined
+        ? longestTest
+        : totalRuntime / expectedGroupCount;
     // console.log({ maxGroupRuntime, longestTest });
     if (maxGroupRuntime < longestTest) {
         console.info(`The max group runtime is less than the longest test.`);
     }
     // The magic happens here
+    // eslint-disable-next-line unicorn/no-array-for-each
     groupRuntimes.forEach(async (group) => {
-        while ((0, util_1.getGroupRuntime)(group.files) < maxGroupRuntime && files.length) {
+        while ((0, util_1.getGroupRuntime)(group.files) < maxGroupRuntime && files.length > 0) {
             // start with file at front of array
             const largestFile = files[0];
             // test whether that file can be added to current group
@@ -7081,7 +7075,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__nccwpck_require__(6130), exports);
+__exportStar(__nccwpck_require__(2363), exports);
 
 
 /***/ }),
@@ -7112,7 +7106,7 @@ Object.defineProperty(exports, "runtimeDetails", ({ enumerable: true, get: funct
 
 /***/ }),
 
-/***/ 9995:
+/***/ 8309:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7122,7 +7116,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 961:
+/***/ 5090:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7132,7 +7126,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 2816:
+/***/ 5791:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7142,7 +7136,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 8311:
+/***/ 4104:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7168,16 +7162,16 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__nccwpck_require__(9995), exports);
-__exportStar(__nccwpck_require__(961), exports);
-__exportStar(__nccwpck_require__(2816), exports);
-__exportStar(__nccwpck_require__(8311), exports);
-__exportStar(__nccwpck_require__(1877), exports);
+__exportStar(__nccwpck_require__(8309), exports);
+__exportStar(__nccwpck_require__(5090), exports);
+__exportStar(__nccwpck_require__(5791), exports);
+__exportStar(__nccwpck_require__(4104), exports);
+__exportStar(__nccwpck_require__(9162), exports);
 
 
 /***/ }),
 
-/***/ 1877:
+/***/ 9162:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7203,12 +7197,12 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__nccwpck_require__(9170), exports);
+__exportStar(__nccwpck_require__(2305), exports);
 
 
 /***/ }),
 
-/***/ 9170:
+/***/ 2305:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -7237,7 +7231,7 @@ exports.runtimeDetails = runtimeDetails;
 
 /***/ }),
 
-/***/ 9813:
+/***/ 2773:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7256,7 +7250,7 @@ exports.createFileGroups = createFileGroups;
 
 /***/ }),
 
-/***/ 5098:
+/***/ 3313:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7264,6 +7258,7 @@ exports.createFileGroups = createFileGroups;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getGroupRuntime = void 0;
 const getGroupRuntime = (files) => {
+    // eslint-disable-next-line unicorn/no-array-reduce
     const rawRuntime = files.reduce((runtime, file) => {
         return file ? runtime + file.runtime : 0;
     }, 0);
@@ -7290,8 +7285,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__nccwpck_require__(9813), exports);
-__exportStar(__nccwpck_require__(5098), exports);
+__exportStar(__nccwpck_require__(2773), exports);
+__exportStar(__nccwpck_require__(3313), exports);
 
 
 /***/ }),
