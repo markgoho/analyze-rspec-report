@@ -26,7 +26,7 @@
   "license": "MIT",
   "dependencies": {
     "@actions/artifact": "^1.0.0",
-    "@actions/core": "^1.6.0",
+    "@actions/core": "^1.7.0",
     "rspec-report-analyzer": "^2.0.1",
     "split-config-generator": "^1.3.1"
   },
