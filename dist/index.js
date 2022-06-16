@@ -1,285 +1,13 @@
-require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
-/******/ 	var __webpack_modules__ = ({
-
-/***/ 8044:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.concatReports = void 0;
-// eslint-disable-next-line unicorn/prefer-node-protocol
-const fs_1 = __nccwpck_require__(7147);
-const global_variables_1 = __nccwpck_require__(7751);
-const concatReports = async () => {
-    const allFiles = await fs_1.promises.readdir(global_variables_1.temporaryFolder);
-    const rspecReports = allFiles.filter(file => file.endsWith('.json'));
-    const singleReport = [];
-    for (const rspecReport of rspecReports) {
-        const path = `${global_variables_1.temporaryFolder}/${rspecReport}`;
-        // eslint-disable-next-line unicorn/prefer-json-parse-buffer
-        const report = await fs_1.promises.readFile(path, 'utf-8');
-        singleReport.push(JSON.parse(report));
-    }
-    const examples = singleReport
-        .flatMap(report => report.examples)
-        .filter(report => report.status !== 'pending');
-    await fs_1.promises.writeFile(`${global_variables_1.temporaryFolder}/local-rspec-report.json`, JSON.stringify(examples));
-};
-exports.concatReports = concatReports;
-
-
-/***/ }),
-
-/***/ 5405:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.rspecExamplesToRuntime = void 0;
-const rspecExamplesToRuntime = (examples) => {
-    const dictionary = examples.reduce((totalConfig, example) => {
-        const filePath = removeLeadingDotSlash(example.file_path);
-        if (totalConfig[filePath] !== undefined) {
-            const currentTotal = totalConfig[filePath].runtime;
-            return {
-                ...totalConfig,
-                [filePath]: { runtime: currentTotal + example.run_time },
-            };
-        }
-        else {
-            return {
-                ...totalConfig,
-                [filePath]: { runtime: example.run_time },
-            };
-        }
-    }, {});
-    const filesWithRuntime = createFilesWithRuntime(dictionary);
-    return filesWithRuntime;
-};
-exports.rspecExamplesToRuntime = rspecExamplesToRuntime;
-const removeLeadingDotSlash = (filePath) => {
-    return filePath.replace(/\.\//, '');
-};
-const createFilesWithRuntime = (filesByRuntime) => {
-    return Object.entries(filesByRuntime)
-        .map(([key, value]) => {
-        const { runtime } = value;
-        return {
-            filePath: key,
-            runtime,
-        };
-    })
-        .sort((a, b) => (a.runtime < b.runtime ? 1 : -1));
-};
-
-
-/***/ }),
-
-/***/ 7751:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.concatenatedReportName = exports.temporaryFolder = void 0;
-exports.temporaryFolder = 'rspec-processing';
-exports.concatenatedReportName = 'local-rspec-report.json';
-
-
-/***/ }),
-
-/***/ 3109:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-/* eslint-disable unicorn/prefer-node-protocol */
-/* eslint-disable no-console */
-const artifact = __importStar(__nccwpck_require__(2605));
-const core = __importStar(__nccwpck_require__(2186));
-const split_config_generator_1 = __nccwpck_require__(3116);
-const global_variables_1 = __nccwpck_require__(7751);
-const concat_rspec_reports_1 = __nccwpck_require__(8044);
-const fs_1 = __nccwpck_require__(7147);
-const move_rspec_reports_1 = __nccwpck_require__(5938);
-const remove_leading_text_1 = __nccwpck_require__(2890);
-const examples_to_runtime_1 = __nccwpck_require__(5405);
-async function run() {
-    const singleReportPath = core.getInput('single-report-path');
-    const reportPath = singleReportPath.length > 0
-        ? singleReportPath
-        : `${global_variables_1.temporaryFolder}/${global_variables_1.concatenatedReportName}`;
-    if (singleReportPath.length > 0) {
-        console.log(`Single report path: ${singleReportPath}`);
-    }
-    else {
-        const individualReportsFolder = core.getInput('individual-reports-folder');
-        // Move the rspec reports to a single folder
-        try {
-            await (0, move_rspec_reports_1.moveRspecReports)(individualReportsFolder);
-        }
-        catch (error) {
-            if (error instanceof Error) {
-                core.setFailed(`Could not move the rspec reports: ${error.message}`);
-                return;
-            }
-        }
-        // Concatenate the rspec reports
-        try {
-            await (0, concat_rspec_reports_1.concatReports)();
-        }
-        catch (error) {
-            if (error instanceof Error) {
-                core.setFailed(`Could not concatenate the rspec reports: ${error.message}`);
-                return;
-            }
-        }
-    }
-    let rspecExamplesString;
-    try {
-        rspecExamplesString = await fs_1.promises.readFile(reportPath, 'utf-8');
-    }
-    catch (error) {
-        if (error instanceof Error) {
-            core.setFailed(`Could not read report: ${error.message}`);
-        }
-        return;
-    }
-    let rspecExamples;
-    if (singleReportPath.length > 0) {
-        const singleReport = JSON.parse(rspecExamplesString);
-        rspecExamples = singleReport.examples;
-    }
-    else {
-        rspecExamples = JSON.parse(rspecExamplesString);
-    }
-    const files = (0, examples_to_runtime_1.rspecExamplesToRuntime)(rspecExamples);
-    const details = (0, split_config_generator_1.runtimeDetails)(files);
-    const groupCountInput = core.getInput('group-count');
-    const groupCount = groupCountInput.length === 0
-        ? undefined
-        : Number.parseInt(groupCountInput, 10);
-    const splitConfig = singleReportPath.length > 0
-        ? (0, split_config_generator_1.createSplitConfig)(files, groupCount).map(fileGroup => (0, remove_leading_text_1.removeLeadingText)(fileGroup))
-        : (0, split_config_generator_1.createSplitConfig)(files, groupCount);
-    console.log({ ...details, groupCount: splitConfig.length });
-    const outputPath = core.getInput('output-report');
-    try {
-        await fs_1.promises.writeFile(outputPath, JSON.stringify(splitConfig));
-    }
-    catch (error) {
-        if (error instanceof Error) {
-            core.setFailed(`Setting report to ${outputPath} failed: ${error.message}`);
-        }
-    }
-    // Upload the report
-    const shouldUpload = core.getBooleanInput('upload');
-    const uploadName = core.getInput('upload-name');
-    if (shouldUpload) {
-        if (singleReportPath.length > 0 && uploadName === 'rspec-split-config') {
-            core.setFailed('If a single report is to be uploaded, please provide a name for the artifact');
-            return;
-        }
-        const artifactClient = artifact.create();
-        const artifactName = singleReportPath.length > 0 ? uploadName : 'group-split-config';
-        const filesToUpload = [outputPath];
-        const rootDirectory = '.';
-        try {
-            await artifactClient.uploadArtifact(artifactName, filesToUpload, rootDirectory);
-        }
-        catch (error) {
-            if (error instanceof Error) {
-                core.setFailed(`Uploading the artifact failed: ${error.message}`);
-            }
-        }
-    }
-}
-run();
-
-
-/***/ }),
-
-/***/ 5938:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.moveRspecReports = void 0;
-// eslint-disable-next-line unicorn/prefer-node-protocol
-const fs_1 = __nccwpck_require__(7147);
-const global_variables_1 = __nccwpck_require__(7751);
-const moveRspecReports = async (groupFolderPath) => {
-    const reportNames = await fs_1.promises.readdir(groupFolderPath);
-    for (const reportName of reportNames) {
-        // Get the folder name, e.g. admin, cover_all, etc.
-        // Create the full json report path
-        const originalReportPath = `${groupFolderPath}/${reportName}/${reportName}-rspec-report.json`;
-        // Make a temporary directory
-        await fs_1.promises.mkdir(global_variables_1.temporaryFolder, { recursive: true });
-        // Copy the json report to the new location
-        await fs_1.promises.copyFile(originalReportPath, `${global_variables_1.temporaryFolder}/${reportName}-rspec-report.json`);
-    }
-};
-exports.moveRspecReports = moveRspecReports;
-
-
-/***/ }),
-
-/***/ 2890:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.removeLeadingText = void 0;
-const removeLeadingText = (fileGroup) => {
-    const existingFiles = fileGroup.files;
-    const newFiles = existingFiles.map(file => {
-        const specStringIndex = file.indexOf('spec');
-        const newFilePath = file.slice(Math.max(0, specStringIndex));
-        return newFilePath;
-    });
-    return { files: newFiles };
-};
-exports.removeLeadingText = removeLeadingText;
-
-
-/***/ }),
+import './sourcemap-register.cjs';import { createRequire as __WEBPACK_EXTERNAL_createRequire } from "module";
+/******/ var __webpack_modules__ = ({
 
 /***/ 2605:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-"use strict";
+var __webpack_unused_export__;
 
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.create = void 0;
+__webpack_unused_export__ = ({ value: true });
+exports.U = void 0;
 const artifact_client_1 = __nccwpck_require__(8802);
 /**
  * Constructs an ArtifactClient
@@ -287,7 +15,7 @@ const artifact_client_1 = __nccwpck_require__(8802);
 function create() {
     return artifact_client_1.DefaultArtifactClient.create();
 }
-exports.create = create;
+exports.U = create;
 //# sourceMappingURL=artifact-client.js.map
 
 /***/ }),
@@ -295,7 +23,6 @@ exports.create = create;
 /***/ 8802:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -480,7 +207,6 @@ exports.DefaultArtifactClient = DefaultArtifactClient;
 /***/ 2222:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getRetentionDays = exports.getWorkSpaceDirectory = exports.getWorkFlowRunId = exports.getRuntimeUrl = exports.getRuntimeToken = exports.getDownloadFileConcurrency = exports.getInitialRetryIntervalInMilliseconds = exports.getRetryMultiplier = exports.getRetryLimit = exports.getUploadChunkSize = exports.getUploadFileConcurrency = void 0;
@@ -559,7 +285,6 @@ exports.getRetentionDays = getRetentionDays;
 /***/ 3549:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 /**
  * CRC64: cyclic redundancy check, 64-bits
@@ -869,7 +594,6 @@ exports["default"] = CRC64;
 /***/ 8538:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1161,7 +885,6 @@ exports.DownloadHttpClient = DownloadHttpClient;
 /***/ 5686:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1242,7 +965,6 @@ exports.getDownloadSpecification = getDownloadSpecification;
 /***/ 6527:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.HttpManager = void 0;
@@ -1281,7 +1003,6 @@ exports.HttpManager = HttpManager;
 /***/ 7398:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.checkArtifactFilePath = exports.checkArtifactName = void 0;
@@ -1355,7 +1076,6 @@ exports.checkArtifactFilePath = checkArtifactFilePath;
 /***/ 755:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1450,7 +1170,6 @@ exports.retryHttpClientRequest = retryHttpClientRequest;
 /***/ 9081:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StatusReporter = void 0;
@@ -1509,7 +1228,6 @@ exports.StatusReporter = StatusReporter;
 /***/ 606:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1637,7 +1355,6 @@ exports.createGZipFileInBuffer = createGZipFileInBuffer;
 /***/ 4354:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -2053,7 +1770,6 @@ exports.UploadHttpClient = UploadHttpClient;
 /***/ 183:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -2161,7 +1877,6 @@ exports.getUploadSpecification = getUploadSpecification;
 /***/ 6327:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -2460,7 +2175,6 @@ exports.digestForStream = digestForStream;
 /***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -2559,7 +2273,6 @@ function escapeProperty(s) {
 /***/ 2186:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -2895,7 +2608,6 @@ Object.defineProperty(exports, "toPlatformPath", ({ enumerable: true, get: funct
 /***/ 717:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 // For internal use, subject to change.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -2944,7 +2656,6 @@ exports.issueCommand = issueCommand;
 /***/ 8041:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -3028,7 +2739,6 @@ exports.OidcClient = OidcClient;
 /***/ 2981:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -3093,7 +2803,6 @@ exports.toPlatformPath = toPlatformPath;
 /***/ 1327:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -3383,7 +3092,6 @@ exports.summary = _summary;
 /***/ 5278:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -3430,7 +3138,6 @@ exports.toCommandProperties = toCommandProperties;
 /***/ 5526:
 /***/ (function(__unused_webpack_module, exports) {
 
-"use strict";
 
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -3518,7 +3225,6 @@ exports.PersonalAccessTokenCredentialHandler = PersonalAccessTokenCredentialHand
 /***/ 6255:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -4130,7 +3836,6 @@ const lowercaseKeys = (obj) => Object.keys(obj).reduce((c, k) => ((c[k.toLowerCa
 /***/ 9835:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.checkBypass = exports.getProxyUrl = void 0;
@@ -4198,7 +3903,6 @@ exports.checkBypass = checkBypass;
 /***/ 9417:
 /***/ ((module) => {
 
-"use strict";
 
 module.exports = balanced;
 function balanced(a, b, str) {
@@ -7528,7 +7232,6 @@ function onceStrict (fn) {
 /***/ 8714:
 /***/ ((module) => {
 
-"use strict";
 
 
 function posix(path) {
@@ -7923,7 +7626,6 @@ rimraf.sync = rimrafSync
 /***/ 2363:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createSplitConfig = void 0;
@@ -7992,7 +7694,6 @@ exports.createSplitConfig = createSplitConfig;
 /***/ 4006:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -8013,7 +7714,6 @@ __exportStar(__nccwpck_require__(2363), exports);
 /***/ 3116:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -8039,7 +7739,6 @@ Object.defineProperty(exports, "runtimeDetails", ({ enumerable: true, get: funct
 /***/ 8309:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
@@ -8049,7 +7748,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 /***/ 5090:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
@@ -8059,7 +7757,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 /***/ 5791:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
@@ -8069,7 +7766,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 /***/ 4104:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
@@ -8079,7 +7775,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 /***/ 673:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -8104,7 +7799,6 @@ __exportStar(__nccwpck_require__(9162), exports);
 /***/ 9162:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
@@ -8114,7 +7808,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 /***/ 8:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -8135,7 +7828,6 @@ __exportStar(__nccwpck_require__(2305), exports);
 /***/ 2305:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.runtimeDetails = void 0;
@@ -8164,7 +7856,6 @@ exports.runtimeDetails = runtimeDetails;
 /***/ 2773:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createFileGroups = void 0;
@@ -8183,7 +7874,6 @@ exports.createFileGroups = createFileGroups;
 /***/ 3313:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getGroupRuntime = void 0;
@@ -8202,7 +7892,6 @@ exports.getGroupRuntime = getGroupRuntime;
 /***/ 937:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-"use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -8224,7 +7913,6 @@ __exportStar(__nccwpck_require__(3313), exports);
 /***/ 8065:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-"use strict";
 
 
 const { promisify } = __nccwpck_require__(3837);
@@ -9077,7 +8765,6 @@ module.exports = __nccwpck_require__(4219);
 /***/ 4219:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-"use strict";
 
 
 var net = __nccwpck_require__(1808);
@@ -9389,168 +9076,364 @@ function wrappy (fn, cb) {
 /***/ 9491:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("assert");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("assert");
 
 /***/ }),
 
 /***/ 6113:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("crypto");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("crypto");
 
 /***/ }),
 
 /***/ 2361:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("events");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("events");
 
 /***/ }),
 
 /***/ 7147:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("fs");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("fs");
 
 /***/ }),
 
 /***/ 3685:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("http");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("http");
 
 /***/ }),
 
 /***/ 5687:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("https");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("https");
 
 /***/ }),
 
 /***/ 1808:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("net");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("net");
 
 /***/ }),
 
 /***/ 2037:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("os");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("os");
 
 /***/ }),
 
 /***/ 1017:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("path");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("path");
 
 /***/ }),
 
 /***/ 4074:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("perf_hooks");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("perf_hooks");
 
 /***/ }),
 
 /***/ 2781:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("stream");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("stream");
 
 /***/ }),
 
 /***/ 4404:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("tls");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("tls");
 
 /***/ }),
 
 /***/ 7310:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("url");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("url");
 
 /***/ }),
 
 /***/ 3837:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("util");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("util");
 
 /***/ }),
 
 /***/ 9796:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("zlib");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("zlib");
 
 /***/ })
 
-/******/ 	});
+/******/ });
 /************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __nccwpck_require__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		var threw = true;
-/******/ 		try {
-/******/ 			__webpack_modules__[moduleId].call(module.exports, module, module.exports, __nccwpck_require__);
-/******/ 			threw = false;
-/******/ 		} finally {
-/******/ 			if(threw) delete __webpack_module_cache__[moduleId];
-/******/ 		}
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
+/******/ // The module cache
+/******/ var __webpack_module_cache__ = {};
+/******/ 
+/******/ // The require function
+/******/ function __nccwpck_require__(moduleId) {
+/******/ 	// Check if module is in cache
+/******/ 	var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 	if (cachedModule !== undefined) {
+/******/ 		return cachedModule.exports;
 /******/ 	}
-/******/ 	
+/******/ 	// Create a new module (and put it into the cache)
+/******/ 	var module = __webpack_module_cache__[moduleId] = {
+/******/ 		// no module.id needed
+/******/ 		// no module.loaded needed
+/******/ 		exports: {}
+/******/ 	};
+/******/ 
+/******/ 	// Execute the module function
+/******/ 	var threw = true;
+/******/ 	try {
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __nccwpck_require__);
+/******/ 		threw = false;
+/******/ 	} finally {
+/******/ 		if(threw) delete __webpack_module_cache__[moduleId];
+/******/ 	}
+/******/ 
+/******/ 	// Return the exports of the module
+/******/ 	return module.exports;
+/******/ }
+/******/ 
 /************************************************************************/
-/******/ 	/* webpack/runtime/compat */
-/******/ 	
-/******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
-/******/ 	
+/******/ /* webpack/runtime/compat */
+/******/ 
+/******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
+/******/ 
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(3109);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
-/******/ })()
-;
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+(() => {
+
+;// CONCATENATED MODULE: external "node:fs"
+const external_node_fs_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:fs");
+// EXTERNAL MODULE: ./node_modules/@actions/artifact/lib/artifact-client.js
+var artifact_client = __nccwpck_require__(2605);
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/split-config-generator/dist/index.js
+var dist = __nccwpck_require__(3116);
+;// CONCATENATED MODULE: ./lib/global-variables.js
+const temporaryFolder = 'rspec-processing';
+const concatenatedReportName = 'local-rspec-report.json';
+//# sourceMappingURL=global-variables.js.map
+;// CONCATENATED MODULE: external "node:fs/promises"
+const promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:fs/promises");
+;// CONCATENATED MODULE: ./lib/concat-rspec-reports.js
+
+// eslint-disable-next-line import/no-unresolved
+
+const concatReports = async () => {
+    const allFiles = await (0,promises_namespaceObject.readdir)(temporaryFolder);
+    const rspecReports = allFiles.filter(file => file.endsWith('.json'));
+    const singleReport = [];
+    for (const rspecReport of rspecReports) {
+        const path = `${temporaryFolder}/${rspecReport}`;
+        const report = await (0,promises_namespaceObject.readFile)(path, 'utf8');
+        singleReport.push(JSON.parse(report));
+    }
+    const examples = singleReport
+        .flatMap(report => report.examples)
+        .filter(report => report.status !== 'pending');
+    await (0,promises_namespaceObject.writeFile)(`${temporaryFolder}/local-rspec-report.json`, JSON.stringify(examples));
+};
+//# sourceMappingURL=concat-rspec-reports.js.map
+;// CONCATENATED MODULE: ./lib/move-rspec-reports.js
+
+// eslint-disable-next-line import/no-unresolved
+
+const moveRspecReports = async (groupFolderPath) => {
+    const reportNames = await (0,promises_namespaceObject.readdir)(groupFolderPath);
+    for (const reportName of reportNames) {
+        // Get the folder name, e.g. admin, cover_all, etc.
+        // Create the full json report path
+        const originalReportPath = `${groupFolderPath}/${reportName}/${reportName}-rspec-report.json`;
+        // Make a temporary directory
+        await (0,promises_namespaceObject.mkdir)(temporaryFolder, { recursive: true });
+        // Copy the json report to the new location
+        await (0,promises_namespaceObject.copyFile)(originalReportPath, `${temporaryFolder}/${reportName}-rspec-report.json`);
+    }
+};
+//# sourceMappingURL=move-rspec-reports.js.map
+;// CONCATENATED MODULE: ./lib/remove-leading-text.js
+const removeLeadingText = (fileGroup) => {
+    const existingFiles = fileGroup.files;
+    const newFiles = existingFiles.map(file => {
+        const specStringIndex = file.indexOf('spec');
+        const newFilePath = file.slice(Math.max(0, specStringIndex));
+        return newFilePath;
+    });
+    return { files: newFiles };
+};
+//# sourceMappingURL=remove-leading-text.js.map
+;// CONCATENATED MODULE: ./lib/examples-to-runtime.js
+const rspecExamplesToRuntime = (examples) => {
+    const dictionary = examples.reduce((totalConfig, example) => {
+        const filePath = removeLeadingDotSlash(example.file_path);
+        if (totalConfig[filePath] !== undefined) {
+            const currentTotal = totalConfig[filePath]?.runtime;
+            return {
+                ...totalConfig,
+                [filePath]: { runtime: currentTotal + example.run_time },
+            };
+        }
+        else {
+            return {
+                ...totalConfig,
+                [filePath]: { runtime: example.run_time },
+            };
+        }
+    }, {});
+    const filesWithRuntime = createFilesWithRuntime(dictionary);
+    return filesWithRuntime;
+};
+const removeLeadingDotSlash = (filePath) => {
+    return filePath.replace(/\.\//, '');
+};
+const createFilesWithRuntime = (filesByRuntime) => {
+    // return Object.entries<FileWithRuntimeDictionary>(filesByRuntime)
+    //   .map(([filePath, value]) => {
+    //     const { runtime } = value;
+    //     return {
+    //       filePath,
+    //       runtime,
+    //     };
+    //   })
+    //   .sort((a, b) => (a.runtime < b.runtime ? 1 : -1));
+    const filesWithRuntime = [];
+    for (const filePath in filesByRuntime) {
+        const fileWithRuntime = filesByRuntime[filePath];
+        if (fileWithRuntime !== undefined) {
+            filesWithRuntime.push({
+                filePath,
+                runtime: fileWithRuntime !== undefined ? fileWithRuntime?.runtime : 0,
+            });
+        }
+    }
+    const filteredRuntimes = filesWithRuntime.filter(f => f.runtime !== undefined);
+    return filteredRuntimes.sort((a, b) => (a.runtime < b.runtime ? 1 : -1));
+};
+//# sourceMappingURL=examples-to-runtime.js.map
+;// CONCATENATED MODULE: ./lib/main.js
+/* eslint-disable import/no-unresolved */
+/* eslint-disable no-console */
+
+
+
+
+
+
+
+
+
+async function run() {
+    const singleReportPath = core.getInput('single-report-path');
+    const reportPath = singleReportPath.length > 0
+        ? singleReportPath
+        : `${temporaryFolder}/${concatenatedReportName}`;
+    if (singleReportPath.length > 0) {
+        console.log(`Single report path: ${singleReportPath}`);
+    }
+    else {
+        const individualReportsFolder = core.getInput('individual-reports-folder');
+        // Move the rspec reports to a single folder
+        try {
+            await moveRspecReports(individualReportsFolder);
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                core.setFailed(`Could not move the rspec reports: ${error.message}`);
+                return;
+            }
+        }
+        // Concatenate the rspec reports
+        try {
+            await concatReports();
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                core.setFailed(`Could not concatenate the rspec reports: ${error.message}`);
+                return;
+            }
+        }
+    }
+    let rspecExamplesString;
+    try {
+        rspecExamplesString = await external_node_fs_namespaceObject.promises.readFile(reportPath, 'utf8');
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            core.setFailed(`Could not read report: ${error.message}`);
+        }
+        return;
+    }
+    let rspecExamples;
+    if (singleReportPath.length > 0) {
+        const singleReport = JSON.parse(rspecExamplesString);
+        rspecExamples = singleReport.examples;
+    }
+    else {
+        rspecExamples = JSON.parse(rspecExamplesString);
+    }
+    const files = rspecExamplesToRuntime(rspecExamples);
+    const details = (0,dist.runtimeDetails)(files);
+    const groupCountInput = core.getInput('group-count');
+    const groupCount = groupCountInput.length === 0
+        ? undefined
+        : Number.parseInt(groupCountInput, 10);
+    const splitConfig = singleReportPath.length > 0
+        ? (0,dist.createSplitConfig)(files, groupCount).map(fileGroup => removeLeadingText(fileGroup))
+        : (0,dist.createSplitConfig)(files, groupCount);
+    console.log({ ...details, groupCount: splitConfig.length });
+    const outputPath = core.getInput('output-report');
+    try {
+        await external_node_fs_namespaceObject.promises.writeFile(outputPath, JSON.stringify(splitConfig));
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            core.setFailed(`Setting report to ${outputPath} failed: ${error.message}`);
+        }
+    }
+    // Upload the report
+    const shouldUpload = core.getBooleanInput('upload');
+    const uploadName = core.getInput('upload-name');
+    if (shouldUpload) {
+        if (singleReportPath.length > 0 && uploadName === 'rspec-split-config') {
+            core.setFailed('If a single report is to be uploaded, please provide a name for the artifact');
+            return;
+        }
+        const artifactClient = artifact_client/* create */.U();
+        const artifactName = singleReportPath.length > 0 ? uploadName : 'group-split-config';
+        const filesToUpload = [outputPath];
+        const rootDirectory = '.';
+        try {
+            await artifactClient.uploadArtifact(artifactName, filesToUpload, rootDirectory);
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                core.setFailed(`Uploading the artifact failed: ${error.message}`);
+            }
+        }
+    }
+}
+run();
+//# sourceMappingURL=main.js.map
+})();
+
+
 //# sourceMappingURL=index.js.map

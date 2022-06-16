@@ -1,10 +1,11 @@
 import { RspecExample, RspecReport } from 'rspec-report-analyzer';
-// eslint-disable-next-line unicorn/prefer-node-protocol
-import { promises as fs } from 'fs';
-import { temporaryFolder } from './global-variables';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
+
+// eslint-disable-next-line import/no-unresolved
+import { temporaryFolder } from './global-variables.js';
 
 export const concatReports = async (): Promise<void> => {
-  const allFiles: string[] = await fs.readdir(temporaryFolder);
+  const allFiles: string[] = await readdir(temporaryFolder);
 
   const rspecReports = allFiles.filter(file => file.endsWith('.json'));
 
@@ -13,8 +14,7 @@ export const concatReports = async (): Promise<void> => {
   for (const rspecReport of rspecReports) {
     const path = `${temporaryFolder}/${rspecReport}`;
 
-    // eslint-disable-next-line unicorn/prefer-json-parse-buffer
-    const report = await fs.readFile(path, 'utf-8');
+    const report = await readFile(path, 'utf8');
 
     singleReport.push(JSON.parse(report));
   }
@@ -23,7 +23,7 @@ export const concatReports = async (): Promise<void> => {
     .flatMap(report => report.examples)
     .filter(report => report.status !== 'pending');
 
-  await fs.writeFile(
+  await writeFile(
     `${temporaryFolder}/local-rspec-report.json`,
     JSON.stringify(examples),
   );

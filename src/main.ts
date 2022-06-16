@@ -1,8 +1,8 @@
-/* eslint-disable unicorn/prefer-node-protocol */
+/* eslint-disable import/no-unresolved */
 /* eslint-disable no-console */
+import { promises as fs } from 'node:fs';
 import * as artifact from '@actions/artifact';
 import * as core from '@actions/core';
-
 import {
   FileWithRuntime,
   SplitConfig,
@@ -10,13 +10,12 @@ import {
   runtimeDetails,
 } from 'split-config-generator';
 import { RspecExample, RspecReport } from 'rspec-report-analyzer';
-import { concatenatedReportName, temporaryFolder } from './global-variables';
 
-import { concatReports } from './concat-rspec-reports';
-import { promises as fs } from 'fs';
-import { moveRspecReports } from './move-rspec-reports';
-import { removeLeadingText } from './remove-leading-text';
-import { rspecExamplesToRuntime } from './examples-to-runtime';
+import { concatenatedReportName, temporaryFolder } from './global-variables.js';
+import { concatReports } from './concat-rspec-reports.js';
+import { moveRspecReports } from './move-rspec-reports.js';
+import { removeLeadingText } from './remove-leading-text.js';
+import { rspecExamplesToRuntime } from './examples-to-runtime.js';
 
 async function run(): Promise<void> {
   const singleReportPath: string = core.getInput('single-report-path');
@@ -59,7 +58,7 @@ async function run(): Promise<void> {
   let rspecExamplesString: string;
 
   try {
-    rspecExamplesString = await fs.readFile(reportPath, 'utf-8');
+    rspecExamplesString = await fs.readFile(reportPath, 'utf8');
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(`Could not read report: ${error.message}`);

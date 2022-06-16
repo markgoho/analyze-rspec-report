@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest"],
+    "module": "node16",
+    "moduleResolution": "NodeNext"
+  },
+  "include": ["src", "test"],
+  "exclude": ["node_modules"]
+}

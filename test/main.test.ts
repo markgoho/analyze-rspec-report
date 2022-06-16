@@ -1,8 +1,9 @@
+/* eslint-disable no-console */
 import { expect, test, describe, beforeAll, afterEach } from '@jest/globals';
-import * as process from 'process';
-import * as cp from 'child_process';
-import * as path from 'path';
-import { promises as fs } from 'fs';
+import * as process from 'node:process';
+import { execFileSync, ExecFileSyncOptions } from 'node:child_process';
+import { join } from 'node:path';
+import { rm, readFile } from 'node:fs/promises';
 import { FileGroup } from 'split-config-generator';
 
 describe('Testing output of actions', () => {
@@ -18,33 +19,34 @@ describe('Testing output of actions', () => {
   process.env['INPUT_UPLOAD-NAME'] = uploadName;
 
   const np = process.execPath;
-  const ip = path.join(__dirname, '..', 'lib', 'main.js');
-  const options: cp.ExecFileSyncOptions = {
+  // eslint-disable-next-line unicorn/prefer-module
+  const ip = join(__dirname, '..', 'lib', 'main.js');
+  const options: ExecFileSyncOptions = {
     env: process.env,
   };
 
   beforeAll(async () => {
     // Remove testing output folders and files
-    await fs.rm('rspec-processing', { recursive: true, force: true });
-    await fs.rm(outputReport, { force: true });
+    await rm('rspec-processing', { recursive: true, force: true });
+    await rm(outputReport, { force: true });
   });
 
   afterEach(async () => {
     // Remove testing output folders and files
-    await fs.rm('rspec-processing', { recursive: true, force: true });
-    await fs.rm(outputReport, { force: true });
+    await rm('rspec-processing', { recursive: true, force: true });
+    await rm(outputReport, { force: true });
   });
 
   test('test default inputs', async () => {
     try {
-      // console.log(cp.execFileSync(np, [ip], options).toString());
-      cp.execFileSync(np, [ip], options);
-    } catch (e) {
-      console.error('Could not exec file sync', e);
+      // console.log(execFileSync(np, [ip], options).toString());
+      execFileSync(np, [ip], options);
+    } catch (error) {
+      console.error('Could not exec file sync', error);
     }
 
     const reportFile: FileGroup[] = JSON.parse(
-      await fs.readFile(outputReport, 'utf8'),
+      await readFile(outputReport, 'utf8'),
     );
 
     expect(reportFile.length).toBe(3);
@@ -53,14 +55,14 @@ describe('Testing output of actions', () => {
   test('test default manual group count lower than suggested', async () => {
     process.env['INPUT_GROUP-COUNT'] = '2';
     try {
-      // console.log(cp.execFileSync(np, [ip], options).toString());
-      cp.execFileSync(np, [ip], options);
-    } catch (e) {
-      console.error('Could not exec file sync', e);
+      // console.log(execFileSync(np, [ip], options).toString());
+      execFileSync(np, [ip], options);
+    } catch (error) {
+      console.error('Could not exec file sync', error);
     }
 
     const reportFile: FileGroup[] = JSON.parse(
-      await fs.readFile(outputReport, 'utf8'),
+      await readFile(outputReport, 'utf8'),
     );
 
     expect(reportFile.length).toBe(2);
@@ -69,14 +71,14 @@ describe('Testing output of actions', () => {
   test('test default manual group count higher than allowed', async () => {
     process.env['INPUT_GROUP-COUNT'] = '15';
     try {
-      // console.log(cp.execFileSync(np, [ip], options).toString());
-      cp.execFileSync(np, [ip], options);
-    } catch (e) {
-      console.error('Could not exec file sync', e);
+      // console.log(execFileSync(np, [ip], options).toString());
+      execFileSync(np, [ip], options);
+    } catch (error) {
+      console.error('Could not exec file sync', error);
     }
 
     const reportFile: FileGroup[] = JSON.parse(
-      await fs.readFile(outputReport, 'utf8'),
+      await readFile(outputReport, 'utf8'),
     );
 
     expect(reportFile.length).toBe(3);
@@ -89,14 +91,14 @@ describe('Testing output of actions', () => {
     process.env['INPUT_SINGLE-REPORT-PATH'] = singleReportPath;
 
     try {
-      // console.log(cp.execFileSync(np, [ip], options).toString());
-      cp.execFileSync(np, [ip], options);
-    } catch (e) {
-      console.error('Could not exec file sync', e);
+      // console.log(execFileSync(np, [ip], options).toString());
+      execFileSync(np, [ip], options);
+    } catch (error) {
+      console.error('Could not exec file sync', error);
     }
 
     const reportFile: FileGroup[] = JSON.parse(
-      await fs.readFile(outputReport, 'utf8'),
+      await readFile(outputReport, 'utf8'),
     );
 
     expect(reportFile.length).toBe(11);

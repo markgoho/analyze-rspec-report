@@ -1,9 +1,7 @@
-module.exports = {
+/** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
+export default {
   clearMocks: true,
-  moduleFileExtensions: ['js', 'ts'],
   testMatch: ['**/*.test.ts'],
-  transform: {
-    '^.+\\.ts$': 'ts-jest'
-  },
-  verbose: true
-}
+  verbose: true,
+  preset: 'ts-jest/presets/default-esm',
+};
