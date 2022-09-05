@@ -2309,6 +2309,7 @@ const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(5278);
 const os = __importStar(__nccwpck_require__(2037));
 const path = __importStar(__nccwpck_require__(1017));
+const uuid_1 = __nccwpck_require__(5840);
 const oidc_utils_1 = __nccwpck_require__(8041);
 /**
  * The code to exit an action
@@ -2338,7 +2339,14 @@ function exportVariable(name, val) {
     process.env[name] = convertedVal;
     const filePath = process.env['GITHUB_ENV'] || '';
     if (filePath) {
-        const delimiter = '_GitHubActionsFileCommandDelimeter_';
+        const delimiter = `ghadelimiter_${uuid_1.v4()}`;
+        // These should realistically never happen, but just in case someone finds a way to exploit uuid generation let's not allow keys or values that contain the delimiter.
+        if (name.includes(delimiter)) {
+            throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
+        }
+        if (convertedVal.includes(delimiter)) {
+            throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
+        }
         const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`;
         file_command_1.issueCommand('ENV', commandValue);
     }
@@ -9033,6 +9041,637 @@ exports.debug = debug; // for test
 
 /***/ }),
 
+/***/ 5840:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+Object.defineProperty(exports, "v1", ({
+  enumerable: true,
+  get: function () {
+    return _v.default;
+  }
+}));
+Object.defineProperty(exports, "v3", ({
+  enumerable: true,
+  get: function () {
+    return _v2.default;
+  }
+}));
+Object.defineProperty(exports, "v4", ({
+  enumerable: true,
+  get: function () {
+    return _v3.default;
+  }
+}));
+Object.defineProperty(exports, "v5", ({
+  enumerable: true,
+  get: function () {
+    return _v4.default;
+  }
+}));
+Object.defineProperty(exports, "NIL", ({
+  enumerable: true,
+  get: function () {
+    return _nil.default;
+  }
+}));
+Object.defineProperty(exports, "version", ({
+  enumerable: true,
+  get: function () {
+    return _version.default;
+  }
+}));
+Object.defineProperty(exports, "validate", ({
+  enumerable: true,
+  get: function () {
+    return _validate.default;
+  }
+}));
+Object.defineProperty(exports, "stringify", ({
+  enumerable: true,
+  get: function () {
+    return _stringify.default;
+  }
+}));
+Object.defineProperty(exports, "parse", ({
+  enumerable: true,
+  get: function () {
+    return _parse.default;
+  }
+}));
+
+var _v = _interopRequireDefault(__nccwpck_require__(8628));
+
+var _v2 = _interopRequireDefault(__nccwpck_require__(6409));
+
+var _v3 = _interopRequireDefault(__nccwpck_require__(5122));
+
+var _v4 = _interopRequireDefault(__nccwpck_require__(9120));
+
+var _nil = _interopRequireDefault(__nccwpck_require__(5332));
+
+var _version = _interopRequireDefault(__nccwpck_require__(1595));
+
+var _validate = _interopRequireDefault(__nccwpck_require__(6900));
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(8950));
+
+var _parse = _interopRequireDefault(__nccwpck_require__(2746));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/***/ }),
+
+/***/ 4569:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _crypto = _interopRequireDefault(__nccwpck_require__(6113));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function md5(bytes) {
+  if (Array.isArray(bytes)) {
+    bytes = Buffer.from(bytes);
+  } else if (typeof bytes === 'string') {
+    bytes = Buffer.from(bytes, 'utf8');
+  }
+
+  return _crypto.default.createHash('md5').update(bytes).digest();
+}
+
+var _default = md5;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 5332:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+var _default = '00000000-0000-0000-0000-000000000000';
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 2746:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _validate = _interopRequireDefault(__nccwpck_require__(6900));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function parse(uuid) {
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Invalid UUID');
+  }
+
+  let v;
+  const arr = new Uint8Array(16); // Parse ########-....-....-....-............
+
+  arr[0] = (v = parseInt(uuid.slice(0, 8), 16)) >>> 24;
+  arr[1] = v >>> 16 & 0xff;
+  arr[2] = v >>> 8 & 0xff;
+  arr[3] = v & 0xff; // Parse ........-####-....-....-............
+
+  arr[4] = (v = parseInt(uuid.slice(9, 13), 16)) >>> 8;
+  arr[5] = v & 0xff; // Parse ........-....-####-....-............
+
+  arr[6] = (v = parseInt(uuid.slice(14, 18), 16)) >>> 8;
+  arr[7] = v & 0xff; // Parse ........-....-....-####-............
+
+  arr[8] = (v = parseInt(uuid.slice(19, 23), 16)) >>> 8;
+  arr[9] = v & 0xff; // Parse ........-....-....-....-############
+  // (Use "/" to avoid 32-bit truncation when bit-shifting high-order bytes)
+
+  arr[10] = (v = parseInt(uuid.slice(24, 36), 16)) / 0x10000000000 & 0xff;
+  arr[11] = v / 0x100000000 & 0xff;
+  arr[12] = v >>> 24 & 0xff;
+  arr[13] = v >>> 16 & 0xff;
+  arr[14] = v >>> 8 & 0xff;
+  arr[15] = v & 0xff;
+  return arr;
+}
+
+var _default = parse;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 814:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+var _default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 807:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = rng;
+
+var _crypto = _interopRequireDefault(__nccwpck_require__(6113));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const rnds8Pool = new Uint8Array(256); // # of random values to pre-allocate
+
+let poolPtr = rnds8Pool.length;
+
+function rng() {
+  if (poolPtr > rnds8Pool.length - 16) {
+    _crypto.default.randomFillSync(rnds8Pool);
+
+    poolPtr = 0;
+  }
+
+  return rnds8Pool.slice(poolPtr, poolPtr += 16);
+}
+
+/***/ }),
+
+/***/ 5274:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _crypto = _interopRequireDefault(__nccwpck_require__(6113));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function sha1(bytes) {
+  if (Array.isArray(bytes)) {
+    bytes = Buffer.from(bytes);
+  } else if (typeof bytes === 'string') {
+    bytes = Buffer.from(bytes, 'utf8');
+  }
+
+  return _crypto.default.createHash('sha1').update(bytes).digest();
+}
+
+var _default = sha1;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 8950:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _validate = _interopRequireDefault(__nccwpck_require__(6900));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+const byteToHex = [];
+
+for (let i = 0; i < 256; ++i) {
+  byteToHex.push((i + 0x100).toString(16).substr(1));
+}
+
+function stringify(arr, offset = 0) {
+  // Note: Be careful editing this code!  It's been tuned for performance
+  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
+  const uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
+  // of the following:
+  // - One or more input array values don't map to a hex octet (leading to
+  // "undefined" in the uuid)
+  // - Invalid input values for the RFC `version` or `variant` fields
+
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Stringified UUID is invalid');
+  }
+
+  return uuid;
+}
+
+var _default = stringify;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 8628:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _rng = _interopRequireDefault(__nccwpck_require__(807));
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(8950));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+let _nodeId;
+
+let _clockseq; // Previous uuid creation time
+
+
+let _lastMSecs = 0;
+let _lastNSecs = 0; // See https://github.com/uuidjs/uuid for API details
+
+function v1(options, buf, offset) {
+  let i = buf && offset || 0;
+  const b = buf || new Array(16);
+  options = options || {};
+  let node = options.node || _nodeId;
+  let clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq; // node and clockseq need to be initialized to random values if they're not
+  // specified.  We do this lazily to minimize issues related to insufficient
+  // system entropy.  See #189
+
+  if (node == null || clockseq == null) {
+    const seedBytes = options.random || (options.rng || _rng.default)();
+
+    if (node == null) {
+      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+      node = _nodeId = [seedBytes[0] | 0x01, seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]];
+    }
+
+    if (clockseq == null) {
+      // Per 4.2.2, randomize (14 bit) clockseq
+      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
+    }
+  } // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+
+
+  let msecs = options.msecs !== undefined ? options.msecs : Date.now(); // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+
+  let nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1; // Time since last uuid creation (in msecs)
+
+  const dt = msecs - _lastMSecs + (nsecs - _lastNSecs) / 10000; // Per 4.2.1.2, Bump clockseq on clock regression
+
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  } // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+
+
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  } // Per 4.2.1.2 Throw error if too many uuids are requested
+
+
+  if (nsecs >= 10000) {
+    throw new Error("uuid.v1(): Can't create more than 10M uuids/sec");
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq; // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+
+  msecs += 12219292800000; // `time_low`
+
+  const tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff; // `time_mid`
+
+  const tmh = msecs / 0x100000000 * 10000 & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff; // `time_high_and_version`
+
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+
+  b[i++] = tmh >>> 16 & 0xff; // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+
+  b[i++] = clockseq >>> 8 | 0x80; // `clock_seq_low`
+
+  b[i++] = clockseq & 0xff; // `node`
+
+  for (let n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf || (0, _stringify.default)(b);
+}
+
+var _default = v1;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 6409:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _v = _interopRequireDefault(__nccwpck_require__(5998));
+
+var _md = _interopRequireDefault(__nccwpck_require__(4569));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const v3 = (0, _v.default)('v3', 0x30, _md.default);
+var _default = v3;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 5998:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = _default;
+exports.URL = exports.DNS = void 0;
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(8950));
+
+var _parse = _interopRequireDefault(__nccwpck_require__(2746));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function stringToBytes(str) {
+  str = unescape(encodeURIComponent(str)); // UTF8 escape
+
+  const bytes = [];
+
+  for (let i = 0; i < str.length; ++i) {
+    bytes.push(str.charCodeAt(i));
+  }
+
+  return bytes;
+}
+
+const DNS = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+exports.DNS = DNS;
+const URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
+exports.URL = URL;
+
+function _default(name, version, hashfunc) {
+  function generateUUID(value, namespace, buf, offset) {
+    if (typeof value === 'string') {
+      value = stringToBytes(value);
+    }
+
+    if (typeof namespace === 'string') {
+      namespace = (0, _parse.default)(namespace);
+    }
+
+    if (namespace.length !== 16) {
+      throw TypeError('Namespace must be array-like (16 iterable integer values, 0-255)');
+    } // Compute hash of namespace and value, Per 4.3
+    // Future: Use spread syntax when supported on all platforms, e.g. `bytes =
+    // hashfunc([...namespace, ... value])`
+
+
+    let bytes = new Uint8Array(16 + value.length);
+    bytes.set(namespace);
+    bytes.set(value, namespace.length);
+    bytes = hashfunc(bytes);
+    bytes[6] = bytes[6] & 0x0f | version;
+    bytes[8] = bytes[8] & 0x3f | 0x80;
+
+    if (buf) {
+      offset = offset || 0;
+
+      for (let i = 0; i < 16; ++i) {
+        buf[offset + i] = bytes[i];
+      }
+
+      return buf;
+    }
+
+    return (0, _stringify.default)(bytes);
+  } // Function#name is not settable on some platforms (#270)
+
+
+  try {
+    generateUUID.name = name; // eslint-disable-next-line no-empty
+  } catch (err) {} // For CommonJS default export support
+
+
+  generateUUID.DNS = DNS;
+  generateUUID.URL = URL;
+  return generateUUID;
+}
+
+/***/ }),
+
+/***/ 5122:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _rng = _interopRequireDefault(__nccwpck_require__(807));
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(8950));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function v4(options, buf, offset) {
+  options = options || {};
+
+  const rnds = options.random || (options.rng || _rng.default)(); // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+
+
+  rnds[6] = rnds[6] & 0x0f | 0x40;
+  rnds[8] = rnds[8] & 0x3f | 0x80; // Copy bytes to buffer, if provided
+
+  if (buf) {
+    offset = offset || 0;
+
+    for (let i = 0; i < 16; ++i) {
+      buf[offset + i] = rnds[i];
+    }
+
+    return buf;
+  }
+
+  return (0, _stringify.default)(rnds);
+}
+
+var _default = v4;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 9120:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _v = _interopRequireDefault(__nccwpck_require__(5998));
+
+var _sha = _interopRequireDefault(__nccwpck_require__(5274));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const v5 = (0, _v.default)('v5', 0x50, _sha.default);
+var _default = v5;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 6900:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _regex = _interopRequireDefault(__nccwpck_require__(814));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function validate(uuid) {
+  return typeof uuid === 'string' && _regex.default.test(uuid);
+}
+
+var _default = validate;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 1595:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _validate = _interopRequireDefault(__nccwpck_require__(6900));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function version(uuid) {
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Invalid UUID');
+  }
+
+  return parseInt(uuid.substr(14, 1), 16);
+}
+
+var _default = version;
+exports["default"] = _default;
+
+/***/ }),
+
 /***/ 2940:
 /***/ ((module) => {
 
@@ -9122,6 +9761,20 @@ module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("net");
 
 /***/ }),
 
+/***/ 7561:
+/***/ ((module) => {
+
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:fs");
+
+/***/ }),
+
+/***/ 3977:
+/***/ ((module) => {
+
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:fs/promises");
+
+/***/ }),
+
 /***/ 2037:
 /***/ ((module) => {
 
@@ -9176,112 +9829,43 @@ module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("util");
 
 module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("zlib");
 
-/***/ })
+/***/ }),
 
-/******/ });
-/************************************************************************/
-/******/ // The module cache
-/******/ var __webpack_module_cache__ = {};
-/******/ 
-/******/ // The require function
-/******/ function __nccwpck_require__(moduleId) {
-/******/ 	// Check if module is in cache
-/******/ 	var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 	if (cachedModule !== undefined) {
-/******/ 		return cachedModule.exports;
-/******/ 	}
-/******/ 	// Create a new module (and put it into the cache)
-/******/ 	var module = __webpack_module_cache__[moduleId] = {
-/******/ 		// no module.id needed
-/******/ 		// no module.loaded needed
-/******/ 		exports: {}
-/******/ 	};
-/******/ 
-/******/ 	// Execute the module function
-/******/ 	var threw = true;
-/******/ 	try {
-/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __nccwpck_require__);
-/******/ 		threw = false;
-/******/ 	} finally {
-/******/ 		if(threw) delete __webpack_module_cache__[moduleId];
-/******/ 	}
-/******/ 
-/******/ 	// Return the exports of the module
-/******/ 	return module.exports;
-/******/ }
-/******/ 
-/************************************************************************/
-/******/ /* webpack/runtime/compat */
-/******/ 
-/******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
-/******/ 
-/************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
-(() => {
+/***/ 4597:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
 
-;// CONCATENATED MODULE: external "node:fs"
-const external_node_fs_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:fs");
-// EXTERNAL MODULE: ./node_modules/@actions/artifact/lib/artifact-client.js
-var artifact_client = __nccwpck_require__(2605);
-// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
-var core = __nccwpck_require__(2186);
-// EXTERNAL MODULE: ./node_modules/split-config-generator/dist/index.js
-var dist = __nccwpck_require__(3116);
-;// CONCATENATED MODULE: ./lib/global-variables.js
-const temporaryFolder = 'rspec-processing';
-const concatenatedReportName = 'local-rspec-report.json';
-//# sourceMappingURL=global-variables.js.map
-;// CONCATENATED MODULE: external "node:fs/promises"
-const promises_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:fs/promises");
-;// CONCATENATED MODULE: ./lib/concat-rspec-reports.js
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "B": () => (/* binding */ concatReports)
+/* harmony export */ });
+/* harmony import */ var node_fs_promises__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3977);
+/* harmony import */ var _global_variables_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(711);
 
 // eslint-disable-next-line import/no-unresolved
 
 const concatReports = async () => {
-    const allFiles = await (0,promises_namespaceObject.readdir)(temporaryFolder);
+    const allFiles = await (0,node_fs_promises__WEBPACK_IMPORTED_MODULE_0__.readdir)(_global_variables_js__WEBPACK_IMPORTED_MODULE_1__/* .temporaryFolder */ .q);
     const rspecReports = allFiles.filter(file => file.endsWith('.json'));
     const singleReport = [];
     for (const rspecReport of rspecReports) {
-        const path = `${temporaryFolder}/${rspecReport}`;
-        const report = await (0,promises_namespaceObject.readFile)(path, 'utf8');
+        const path = `${_global_variables_js__WEBPACK_IMPORTED_MODULE_1__/* .temporaryFolder */ .q}/${rspecReport}`;
+        const report = await (0,node_fs_promises__WEBPACK_IMPORTED_MODULE_0__.readFile)(path, 'utf8');
         singleReport.push(JSON.parse(report));
     }
     const examples = singleReport
         .flatMap(report => report.examples)
         .filter(report => report.status !== 'pending');
-    await (0,promises_namespaceObject.writeFile)(`${temporaryFolder}/local-rspec-report.json`, JSON.stringify(examples));
+    await (0,node_fs_promises__WEBPACK_IMPORTED_MODULE_0__.writeFile)(`${_global_variables_js__WEBPACK_IMPORTED_MODULE_1__/* .temporaryFolder */ .q}/local-rspec-report.json`, JSON.stringify(examples));
 };
 //# sourceMappingURL=concat-rspec-reports.js.map
-;// CONCATENATED MODULE: ./lib/move-rspec-reports.js
 
-// eslint-disable-next-line import/no-unresolved
+/***/ }),
 
-const moveRspecReports = async (groupFolderPath) => {
-    const reportNames = await (0,promises_namespaceObject.readdir)(groupFolderPath);
-    for (const reportName of reportNames) {
-        // Get the folder name, e.g. admin, cover_all, etc.
-        // Create the full json report path
-        const originalReportPath = `${groupFolderPath}/${reportName}/${reportName}-rspec-report.json`;
-        // Make a temporary directory
-        await (0,promises_namespaceObject.mkdir)(temporaryFolder, { recursive: true });
-        // Copy the json report to the new location
-        await (0,promises_namespaceObject.copyFile)(originalReportPath, `${temporaryFolder}/${reportName}-rspec-report.json`);
-    }
-};
-//# sourceMappingURL=move-rspec-reports.js.map
-;// CONCATENATED MODULE: ./lib/remove-leading-text.js
-const removeLeadingText = (fileGroup) => {
-    const existingFiles = fileGroup.files;
-    const newFiles = existingFiles.map(file => {
-        const specStringIndex = file.indexOf('spec');
-        const newFilePath = file.slice(Math.max(0, specStringIndex));
-        return newFilePath;
-    });
-    return { files: newFiles };
-};
-//# sourceMappingURL=remove-leading-text.js.map
-;// CONCATENATED MODULE: ./lib/examples-to-runtime.js
+/***/ 3206:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "J": () => (/* binding */ rspecExamplesToRuntime)
+/* harmony export */ });
 const rspecExamplesToRuntime = (examples) => {
     const dictionary = examples.reduce((totalConfig, example) => {
         const filePath = removeLeadingDotSlash(example.file_path);
@@ -9329,7 +9913,35 @@ const createFilesWithRuntime = (filesByRuntime) => {
     return filteredRuntimes.sort((a, b) => (a.runtime < b.runtime ? 1 : -1));
 };
 //# sourceMappingURL=examples-to-runtime.js.map
-;// CONCATENATED MODULE: ./lib/main.js
+
+/***/ }),
+
+/***/ 711:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "q": () => (/* binding */ temporaryFolder),
+/* harmony export */   "c": () => (/* binding */ concatenatedReportName)
+/* harmony export */ });
+const temporaryFolder = 'rspec-processing';
+const concatenatedReportName = 'local-rspec-report.json';
+//# sourceMappingURL=global-variables.js.map
+
+/***/ }),
+
+/***/ 2092:
+/***/ ((__webpack_module__, __unused_webpack___webpack_exports__, __nccwpck_require__) => {
+
+__nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__) => {
+/* harmony import */ var node_fs__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7561);
+/* harmony import */ var _actions_artifact__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2605);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(2186);
+/* harmony import */ var split_config_generator__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(3116);
+/* harmony import */ var _global_variables_js__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(711);
+/* harmony import */ var _concat_rspec_reports_js__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(4597);
+/* harmony import */ var _move_rspec_reports_js__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(1939);
+/* harmony import */ var _remove_leading_text_js__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(9122);
+/* harmony import */ var _examples_to_runtime_js__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(3206);
 /* eslint-disable import/no-unresolved */
 /* eslint-disable no-console */
 
@@ -9342,43 +9954,43 @@ const createFilesWithRuntime = (filesByRuntime) => {
 
 
 async function run() {
-    const singleReportPath = core.getInput('single-report-path');
+    const singleReportPath = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('single-report-path');
     const reportPath = singleReportPath.length > 0
         ? singleReportPath
-        : `${temporaryFolder}/${concatenatedReportName}`;
+        : `${_global_variables_js__WEBPACK_IMPORTED_MODULE_6__/* .temporaryFolder */ .q}/${_global_variables_js__WEBPACK_IMPORTED_MODULE_6__/* .concatenatedReportName */ .c}`;
     if (singleReportPath.length > 0) {
         console.log(`Single report path: ${singleReportPath}`);
     }
     else {
-        const individualReportsFolder = core.getInput('individual-reports-folder');
+        const individualReportsFolder = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('individual-reports-folder');
         // Move the rspec reports to a single folder
         try {
-            await moveRspecReports(individualReportsFolder);
+            await (0,_move_rspec_reports_js__WEBPACK_IMPORTED_MODULE_5__/* .moveRspecReports */ .S)(individualReportsFolder);
         }
         catch (error) {
             if (error instanceof Error) {
-                core.setFailed(`Could not move the rspec reports: ${error.message}`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_2__.setFailed(`Could not move the rspec reports: ${error.message}`);
                 return;
             }
         }
         // Concatenate the rspec reports
         try {
-            await concatReports();
+            await (0,_concat_rspec_reports_js__WEBPACK_IMPORTED_MODULE_4__/* .concatReports */ .B)();
         }
         catch (error) {
             if (error instanceof Error) {
-                core.setFailed(`Could not concatenate the rspec reports: ${error.message}`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_2__.setFailed(`Could not concatenate the rspec reports: ${error.message}`);
                 return;
             }
         }
     }
     let rspecExamplesString;
     try {
-        rspecExamplesString = await external_node_fs_namespaceObject.promises.readFile(reportPath, 'utf8');
+        rspecExamplesString = await node_fs__WEBPACK_IMPORTED_MODULE_0__.promises.readFile(reportPath, 'utf8');
     }
     catch (error) {
         if (error instanceof Error) {
-            core.setFailed(`Could not read report: ${error.message}`);
+            _actions_core__WEBPACK_IMPORTED_MODULE_2__.setFailed(`Could not read report: ${error.message}`);
         }
         return;
     }
@@ -9390,34 +10002,34 @@ async function run() {
     else {
         rspecExamples = JSON.parse(rspecExamplesString);
     }
-    const files = rspecExamplesToRuntime(rspecExamples);
-    const details = (0,dist.runtimeDetails)(files);
-    const groupCountInput = core.getInput('group-count');
+    const files = (0,_examples_to_runtime_js__WEBPACK_IMPORTED_MODULE_7__/* .rspecExamplesToRuntime */ .J)(rspecExamples);
+    const details = (0,split_config_generator__WEBPACK_IMPORTED_MODULE_3__.runtimeDetails)(files);
+    const groupCountInput = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('group-count');
     const groupCount = groupCountInput.length === 0
         ? undefined
         : Number.parseInt(groupCountInput, 10);
     const splitConfig = singleReportPath.length > 0
-        ? (0,dist.createSplitConfig)(files, groupCount).map(fileGroup => removeLeadingText(fileGroup))
-        : (0,dist.createSplitConfig)(files, groupCount);
+        ? (0,split_config_generator__WEBPACK_IMPORTED_MODULE_3__.createSplitConfig)(files, groupCount).map(fileGroup => (0,_remove_leading_text_js__WEBPACK_IMPORTED_MODULE_8__/* .removeLeadingText */ .M)(fileGroup))
+        : (0,split_config_generator__WEBPACK_IMPORTED_MODULE_3__.createSplitConfig)(files, groupCount);
     console.log({ ...details, groupCount: splitConfig.length });
-    const outputPath = core.getInput('output-report');
+    const outputPath = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('output-report');
     try {
-        await external_node_fs_namespaceObject.promises.writeFile(outputPath, JSON.stringify(splitConfig));
+        await node_fs__WEBPACK_IMPORTED_MODULE_0__.promises.writeFile(outputPath, JSON.stringify(splitConfig));
     }
     catch (error) {
         if (error instanceof Error) {
-            core.setFailed(`Setting report to ${outputPath} failed: ${error.message}`);
+            _actions_core__WEBPACK_IMPORTED_MODULE_2__.setFailed(`Setting report to ${outputPath} failed: ${error.message}`);
         }
     }
     // Upload the report
-    const shouldUpload = core.getBooleanInput('upload');
-    const uploadName = core.getInput('upload-name');
+    const shouldUpload = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getBooleanInput('upload');
+    const uploadName = _actions_core__WEBPACK_IMPORTED_MODULE_2__.getInput('upload-name');
     if (shouldUpload) {
         if (singleReportPath.length > 0 && uploadName === 'rspec-split-config') {
-            core.setFailed('If a single report is to be uploaded, please provide a name for the artifact');
+            _actions_core__WEBPACK_IMPORTED_MODULE_2__.setFailed('If a single report is to be uploaded, please provide a name for the artifact');
             return;
         }
-        const artifactClient = artifact_client/* create */.U();
+        const artifactClient = _actions_artifact__WEBPACK_IMPORTED_MODULE_1__/* .create */ .U();
         const artifactName = singleReportPath.length > 0 ? uploadName : 'group-split-config';
         const filesToUpload = [outputPath];
         const rootDirectory = '.';
@@ -9426,14 +10038,199 @@ async function run() {
         }
         catch (error) {
             if (error instanceof Error) {
-                core.setFailed(`Uploading the artifact failed: ${error.message}`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_2__.setFailed(`Uploading the artifact failed: ${error.message}`);
             }
         }
     }
 }
-run();
+await run();
 //# sourceMappingURL=main.js.map
-})();
+__webpack_handle_async_dependencies__();
+}, 1);
 
+/***/ }),
+
+/***/ 1939:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "S": () => (/* binding */ moveRspecReports)
+/* harmony export */ });
+/* harmony import */ var node_fs_promises__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3977);
+/* harmony import */ var _global_variables_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(711);
+
+// eslint-disable-next-line import/no-unresolved
+
+const moveRspecReports = async (groupFolderPath) => {
+    const reportNames = await (0,node_fs_promises__WEBPACK_IMPORTED_MODULE_0__.readdir)(groupFolderPath);
+    for (const reportName of reportNames) {
+        // Get the folder name, e.g. admin, cover_all, etc.
+        // Create the full json report path
+        const originalReportPath = `${groupFolderPath}/${reportName}/${reportName}-rspec-report.json`;
+        // Make a temporary directory
+        await (0,node_fs_promises__WEBPACK_IMPORTED_MODULE_0__.mkdir)(_global_variables_js__WEBPACK_IMPORTED_MODULE_1__/* .temporaryFolder */ .q, { recursive: true });
+        // Copy the json report to the new location
+        await (0,node_fs_promises__WEBPACK_IMPORTED_MODULE_0__.copyFile)(originalReportPath, `${_global_variables_js__WEBPACK_IMPORTED_MODULE_1__/* .temporaryFolder */ .q}/${reportName}-rspec-report.json`);
+    }
+};
+//# sourceMappingURL=move-rspec-reports.js.map
+
+/***/ }),
+
+/***/ 9122:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "M": () => (/* binding */ removeLeadingText)
+/* harmony export */ });
+const removeLeadingText = (fileGroup) => {
+    const existingFiles = fileGroup.files;
+    const newFiles = existingFiles.map(file => {
+        const specStringIndex = file.indexOf('spec');
+        const newFilePath = file.slice(Math.max(0, specStringIndex));
+        return newFilePath;
+    });
+    return { files: newFiles };
+};
+//# sourceMappingURL=remove-leading-text.js.map
+
+/***/ })
+
+/******/ });
+/************************************************************************/
+/******/ // The module cache
+/******/ var __webpack_module_cache__ = {};
+/******/ 
+/******/ // The require function
+/******/ function __nccwpck_require__(moduleId) {
+/******/ 	// Check if module is in cache
+/******/ 	var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 	if (cachedModule !== undefined) {
+/******/ 		return cachedModule.exports;
+/******/ 	}
+/******/ 	// Create a new module (and put it into the cache)
+/******/ 	var module = __webpack_module_cache__[moduleId] = {
+/******/ 		// no module.id needed
+/******/ 		// no module.loaded needed
+/******/ 		exports: {}
+/******/ 	};
+/******/ 
+/******/ 	// Execute the module function
+/******/ 	var threw = true;
+/******/ 	try {
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __nccwpck_require__);
+/******/ 		threw = false;
+/******/ 	} finally {
+/******/ 		if(threw) delete __webpack_module_cache__[moduleId];
+/******/ 	}
+/******/ 
+/******/ 	// Return the exports of the module
+/******/ 	return module.exports;
+/******/ }
+/******/ 
+/************************************************************************/
+/******/ /* webpack/runtime/async module */
+/******/ (() => {
+/******/ 	var webpackThen = typeof Symbol === "function" ? Symbol("webpack then") : "__webpack_then__";
+/******/ 	var webpackExports = typeof Symbol === "function" ? Symbol("webpack exports") : "__webpack_exports__";
+/******/ 	var completeQueue = (queue) => {
+/******/ 		if(queue) {
+/******/ 			queue.forEach((fn) => (fn.r--));
+/******/ 			queue.forEach((fn) => (fn.r-- ? fn.r++ : fn()));
+/******/ 		}
+/******/ 	}
+/******/ 	var completeFunction = (fn) => (!--fn.r && fn());
+/******/ 	var queueFunction = (queue, fn) => (queue ? queue.push(fn) : completeFunction(fn));
+/******/ 	var wrapDeps = (deps) => (deps.map((dep) => {
+/******/ 		if(dep !== null && typeof dep === "object") {
+/******/ 			if(dep[webpackThen]) return dep;
+/******/ 			if(dep.then) {
+/******/ 				var queue = [];
+/******/ 				dep.then((r) => {
+/******/ 					obj[webpackExports] = r;
+/******/ 					completeQueue(queue);
+/******/ 					queue = 0;
+/******/ 				});
+/******/ 				var obj = {};
+/******/ 											obj[webpackThen] = (fn, reject) => (queueFunction(queue, fn), dep['catch'](reject));
+/******/ 				return obj;
+/******/ 			}
+/******/ 		}
+/******/ 		var ret = {};
+/******/ 							ret[webpackThen] = (fn) => (completeFunction(fn));
+/******/ 							ret[webpackExports] = dep;
+/******/ 							return ret;
+/******/ 	}));
+/******/ 	__nccwpck_require__.a = (module, body, hasAwait) => {
+/******/ 		var queue = hasAwait && [];
+/******/ 		var exports = module.exports;
+/******/ 		var currentDeps;
+/******/ 		var outerResolve;
+/******/ 		var reject;
+/******/ 		var isEvaluating = true;
+/******/ 		var nested = false;
+/******/ 		var whenAll = (deps, onResolve, onReject) => {
+/******/ 			if (nested) return;
+/******/ 			nested = true;
+/******/ 			onResolve.r += deps.length;
+/******/ 			deps.map((dep, i) => (dep[webpackThen](onResolve, onReject)));
+/******/ 			nested = false;
+/******/ 		};
+/******/ 		var promise = new Promise((resolve, rej) => {
+/******/ 			reject = rej;
+/******/ 			outerResolve = () => (resolve(exports), completeQueue(queue), queue = 0);
+/******/ 		});
+/******/ 		promise[webpackExports] = exports;
+/******/ 		promise[webpackThen] = (fn, rejectFn) => {
+/******/ 			if (isEvaluating) { return completeFunction(fn); }
+/******/ 			if (currentDeps) whenAll(currentDeps, fn, rejectFn);
+/******/ 			queueFunction(queue, fn);
+/******/ 			promise['catch'](rejectFn);
+/******/ 		};
+/******/ 		module.exports = promise;
+/******/ 		body((deps) => {
+/******/ 			if(!deps) return outerResolve();
+/******/ 			currentDeps = wrapDeps(deps);
+/******/ 			var fn, result;
+/******/ 			var promise = new Promise((resolve, reject) => {
+/******/ 				fn = () => (resolve(result = currentDeps.map((d) => (d[webpackExports]))));
+/******/ 				fn.r = 0;
+/******/ 				whenAll(currentDeps, fn, reject);
+/******/ 			});
+/******/ 			return fn.r ? promise : result;
+/******/ 		}).then(outerResolve, reject);
+/******/ 		isEvaluating = false;
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/define property getters */
+/******/ (() => {
+/******/ 	// define getter functions for harmony exports
+/******/ 	__nccwpck_require__.d = (exports, definition) => {
+/******/ 		for(var key in definition) {
+/******/ 			if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 			}
+/******/ 		}
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/hasOwnProperty shorthand */
+/******/ (() => {
+/******/ 	__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/compat */
+/******/ 
+/******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
+/******/ 
+/************************************************************************/
+/******/ 
+/******/ // startup
+/******/ // Load entry module and return exports
+/******/ // This entry module used 'module' so it can't be inlined
+/******/ var __webpack_exports__ = __nccwpck_require__(2092);
+/******/ __webpack_exports__ = await __webpack_exports__;
+/******/ 
 
 //# sourceMappingURL=index.js.map
