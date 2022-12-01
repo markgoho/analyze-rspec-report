@@ -9884,17 +9884,17 @@ const concatReports = async () => {
 const rspecExamplesToRuntime = (examples) => {
     const dictionary = examples.reduce((totalConfig, example) => {
         const filePath = removeLeadingDotSlash(example.file_path);
-        if (totalConfig[filePath] !== undefined) {
+        if (totalConfig[filePath] === undefined) {
+            return {
+                ...totalConfig,
+                [filePath]: { runtime: example.run_time },
+            };
+        }
+        else {
             const currentTotal = totalConfig[filePath]?.runtime;
             return {
                 ...totalConfig,
                 [filePath]: { runtime: currentTotal + example.run_time },
-            };
-        }
-        else {
-            return {
-                ...totalConfig,
-                [filePath]: { runtime: example.run_time },
             };
         }
     }, {});
@@ -9905,22 +9905,13 @@ const removeLeadingDotSlash = (filePath) => {
     return filePath.replace(/\.\//, '');
 };
 const createFilesWithRuntime = (filesByRuntime) => {
-    // return Object.entries<FileWithRuntimeDictionary>(filesByRuntime)
-    //   .map(([filePath, value]) => {
-    //     const { runtime } = value;
-    //     return {
-    //       filePath,
-    //       runtime,
-    //     };
-    //   })
-    //   .sort((a, b) => (a.runtime < b.runtime ? 1 : -1));
     const filesWithRuntime = [];
     for (const filePath in filesByRuntime) {
         const fileWithRuntime = filesByRuntime[filePath];
         if (fileWithRuntime !== undefined) {
             filesWithRuntime.push({
                 filePath,
-                runtime: fileWithRuntime !== undefined ? fileWithRuntime?.runtime : 0,
+                runtime: fileWithRuntime === undefined ? 0 : fileWithRuntime?.runtime,
             });
         }
     }
