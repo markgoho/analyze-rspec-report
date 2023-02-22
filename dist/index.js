@@ -768,6 +768,13 @@ class DownloadHttpClient {
             };
             const resetDestinationStream = (fileDownloadPath) => __awaiter(this, void 0, void 0, function* () {
                 destinationStream.close();
+                // await until file is created at downloadpath; node15 and up fs.createWriteStream had not created a file yet
+                yield new Promise(resolve => {
+                    destinationStream.on('close', resolve);
+                    if (destinationStream.writableFinished) {
+                        resolve();
+                    }
+                });
                 yield utils_1.rmFile(fileDownloadPath);
                 destinationStream = fs.createWriteStream(fileDownloadPath);
             });
@@ -9926,8 +9933,8 @@ const createFilesWithRuntime = (filesByRuntime) => {
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
 
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "q": () => (/* binding */ temporaryFolder),
-/* harmony export */   "c": () => (/* binding */ concatenatedReportName)
+/* harmony export */   "c": () => (/* binding */ concatenatedReportName),
+/* harmony export */   "q": () => (/* binding */ temporaryFolder)
 /* harmony export */ });
 const temporaryFolder = 'rspec-processing';
 const concatenatedReportName = 'local-rspec-report.json';
@@ -9938,7 +9945,7 @@ const concatenatedReportName = 'local-rspec-report.json';
 /***/ 2092:
 /***/ ((__webpack_module__, __unused_webpack___webpack_exports__, __nccwpck_require__) => {
 
-__nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__) => {
+__nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 /* harmony import */ var node_fs__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7561);
 /* harmony import */ var _actions_artifact__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2605);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(2186);
@@ -10051,8 +10058,8 @@ async function run() {
 }
 await run();
 //# sourceMappingURL=main.js.map
-__webpack_handle_async_dependencies__();
-}, 1);
+__webpack_async_result__();
+} catch(e) { __webpack_async_result__(e); } }, 1);
 
 /***/ }),
 
@@ -10137,75 +10144,70 @@ const removeLeadingText = (fileGroup) => {
 /************************************************************************/
 /******/ /* webpack/runtime/async module */
 /******/ (() => {
-/******/ 	var webpackThen = typeof Symbol === "function" ? Symbol("webpack then") : "__webpack_then__";
+/******/ 	var webpackQueues = typeof Symbol === "function" ? Symbol("webpack queues") : "__webpack_queues__";
 /******/ 	var webpackExports = typeof Symbol === "function" ? Symbol("webpack exports") : "__webpack_exports__";
-/******/ 	var completeQueue = (queue) => {
-/******/ 		if(queue) {
+/******/ 	var webpackError = typeof Symbol === "function" ? Symbol("webpack error") : "__webpack_error__";
+/******/ 	var resolveQueue = (queue) => {
+/******/ 		if(queue && !queue.d) {
+/******/ 			queue.d = 1;
 /******/ 			queue.forEach((fn) => (fn.r--));
 /******/ 			queue.forEach((fn) => (fn.r-- ? fn.r++ : fn()));
 /******/ 		}
 /******/ 	}
-/******/ 	var completeFunction = (fn) => (!--fn.r && fn());
-/******/ 	var queueFunction = (queue, fn) => (queue ? queue.push(fn) : completeFunction(fn));
 /******/ 	var wrapDeps = (deps) => (deps.map((dep) => {
 /******/ 		if(dep !== null && typeof dep === "object") {
-/******/ 			if(dep[webpackThen]) return dep;
+/******/ 			if(dep[webpackQueues]) return dep;
 /******/ 			if(dep.then) {
 /******/ 				var queue = [];
+/******/ 				queue.d = 0;
 /******/ 				dep.then((r) => {
 /******/ 					obj[webpackExports] = r;
-/******/ 					completeQueue(queue);
-/******/ 					queue = 0;
+/******/ 					resolveQueue(queue);
+/******/ 				}, (e) => {
+/******/ 					obj[webpackError] = e;
+/******/ 					resolveQueue(queue);
 /******/ 				});
 /******/ 				var obj = {};
-/******/ 											obj[webpackThen] = (fn, reject) => (queueFunction(queue, fn), dep['catch'](reject));
+/******/ 				obj[webpackQueues] = (fn) => (fn(queue));
 /******/ 				return obj;
 /******/ 			}
 /******/ 		}
 /******/ 		var ret = {};
-/******/ 							ret[webpackThen] = (fn) => (completeFunction(fn));
-/******/ 							ret[webpackExports] = dep;
-/******/ 							return ret;
+/******/ 		ret[webpackQueues] = x => {};
+/******/ 		ret[webpackExports] = dep;
+/******/ 		return ret;
 /******/ 	}));
 /******/ 	__nccwpck_require__.a = (module, body, hasAwait) => {
-/******/ 		var queue = hasAwait && [];
+/******/ 		var queue;
+/******/ 		hasAwait && ((queue = []).d = 1);
+/******/ 		var depQueues = new Set();
 /******/ 		var exports = module.exports;
 /******/ 		var currentDeps;
 /******/ 		var outerResolve;
 /******/ 		var reject;
-/******/ 		var isEvaluating = true;
-/******/ 		var nested = false;
-/******/ 		var whenAll = (deps, onResolve, onReject) => {
-/******/ 			if (nested) return;
-/******/ 			nested = true;
-/******/ 			onResolve.r += deps.length;
-/******/ 			deps.map((dep, i) => (dep[webpackThen](onResolve, onReject)));
-/******/ 			nested = false;
-/******/ 		};
 /******/ 		var promise = new Promise((resolve, rej) => {
 /******/ 			reject = rej;
-/******/ 			outerResolve = () => (resolve(exports), completeQueue(queue), queue = 0);
+/******/ 			outerResolve = resolve;
 /******/ 		});
 /******/ 		promise[webpackExports] = exports;
-/******/ 		promise[webpackThen] = (fn, rejectFn) => {
-/******/ 			if (isEvaluating) { return completeFunction(fn); }
-/******/ 			if (currentDeps) whenAll(currentDeps, fn, rejectFn);
-/******/ 			queueFunction(queue, fn);
-/******/ 			promise['catch'](rejectFn);
-/******/ 		};
+/******/ 		promise[webpackQueues] = (fn) => (queue && fn(queue), depQueues.forEach(fn), promise["catch"](x => {}));
 /******/ 		module.exports = promise;
 /******/ 		body((deps) => {
-/******/ 			if(!deps) return outerResolve();
 /******/ 			currentDeps = wrapDeps(deps);
-/******/ 			var fn, result;
-/******/ 			var promise = new Promise((resolve, reject) => {
-/******/ 				fn = () => (resolve(result = currentDeps.map((d) => (d[webpackExports]))));
+/******/ 			var fn;
+/******/ 			var getResult = () => (currentDeps.map((d) => {
+/******/ 				if(d[webpackError]) throw d[webpackError];
+/******/ 				return d[webpackExports];
+/******/ 			}))
+/******/ 			var promise = new Promise((resolve) => {
+/******/ 				fn = () => (resolve(getResult));
 /******/ 				fn.r = 0;
-/******/ 				whenAll(currentDeps, fn, reject);
+/******/ 				var fnQueue = (q) => (q !== queue && !depQueues.has(q) && (depQueues.add(q), q && !q.d && (fn.r++, q.push(fn))));
+/******/ 				currentDeps.map((dep) => (dep[webpackQueues](fnQueue)));
 /******/ 			});
-/******/ 			return fn.r ? promise : result;
-/******/ 		}).then(outerResolve, reject);
-/******/ 		isEvaluating = false;
+/******/ 			return fn.r ? promise : getResult();
+/******/ 		}, (err) => ((err ? reject(promise[webpackError] = err) : outerResolve(exports)), resolveQueue(queue)));
+/******/ 		queue && (queue.d = 0);
 /******/ 	};
 /******/ })();
 /******/ 
